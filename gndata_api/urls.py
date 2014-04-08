@@ -8,5 +8,7 @@ urlpatterns = patterns('',
     # url(r'^$', 'gndata_api.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
 
+    url(r'^$', 'django.contrib.auth.views.login', {'template_name': 'account/login.html'}),
     url(r'^admin/', include(admin.site.urls)),
+    (r'^account/', include('account.urls'))
 )
