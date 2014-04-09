@@ -4,6 +4,7 @@ import os
 import hashlib
 import urlparse
 import string
+import random
 
 
 # this is base32hex alphabet, used to create unique IDs
@@ -113,3 +114,11 @@ def base32str(value):
 def base32int(value):
     """ converts base32 string into integer """
     return int(value, 32)
+
+
+def get_new_local_id():
+    """ new 10-chars base32 ID, unique between different object versions """
+    uid = random.choice(alphabet[1:])
+    for i in range(9):
+        uid += random.choice(alphabet)
+    return base32int(uid)

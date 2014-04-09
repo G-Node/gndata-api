@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from django.db import models, connection
+from django.db import models, connection, transaction
 from django.db.models.query import QuerySet, ValuesQuerySet, ValuesListQuerySet, DateQuerySet
 from django.db.models.sql.where import AND
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor
@@ -25,7 +25,7 @@ class VReverseSingleRelatedObjectDescriptor(ReverseSingleRelatedObjectDescriptor
         qs = super(VReverseSingleRelatedObjectDescriptor, self).get_query_set(**db_hints)
 
         # assign _at_time to the qs if needed
-        if db_hints.has_key( 'instance' ):
+        if db_hints.has_key('instance'):
             if isinstance(db_hints['instance'], self.field.model):
                 inst = db_hints['instance']
                 if hasattr(inst, '_at_time'):
@@ -44,7 +44,7 @@ class VersionedForeignKey(models.ForeignKey):
 # VERSIONED QuerySets
 #===============================================================================
 
-class BaseQuerySetExtension(object):
+class QuerySetMixin(object):
     """ basic extension for every queryset class to support versioning """
     _at_time = None  # proxy version time for related models
     _time_injected = False
@@ -60,11 +60,11 @@ class BaseQuerySetExtension(object):
             else:
                 node[0].alias = table
 
-        def extract_rel_tables( nodes, extracted ):
+        def extract_rel_tables(nodes, extracted):
             for name, inside in nodes.items():
-                extracted.append( name )
+                extracted.append(name)
                 if inside:
-                    extract_rel_tables( inside, extracted )
+                    extract_rel_tables(inside, extracted)
 
         if not self._time_injected:
             # 1. save limits
@@ -79,7 +79,7 @@ class BaseQuerySetExtension(object):
             qry = self.query.__class__(model=self.model)
             if self._at_time:
                 at_time = self._at_time
-                qry.add_q(Q(starts_at__lte = at_time) )
+                qry.add_q(Q(starts_at__lte = at_time))
                 qry.add_q(Q(ends_at__gt = at_time) | Q(ends_at__isnull = True))
             else:
                 qry.add_q(Q(ends_at__isnull = True))
@@ -90,7 +90,7 @@ class BaseQuerySetExtension(object):
 
             # - build map of models with tables: {<table name>: <model>}
             vmodel_map = {}
-            for model in connection.introspection.installed_models( tables ):
+            for model in connection.introspection.installed_models(tables):
                 vmodel_map[model._meta.db_table] = model
 
             # - add node with time filters to all versioned models (tables)
@@ -119,16 +119,16 @@ class BaseQuerySetExtension(object):
     def _filter_or_exclude(self, negate, *args, **kwargs):
         """ versioned QuerySet supports 'at_time' parameter for filtering 
         versioned objects. """
-        kwargs, timeflt = split_time( **kwargs )
+        kwargs, timeflt = split_time(**kwargs)
         if timeflt.has_key('at_time'):
             self._at_time = timeflt['at_time']
-        return super(BaseQuerySetExtension, self)._filter_or_exclude(negate, *args, **kwargs)
+        return super(QuerySetMixin, self)._filter_or_exclude(negate, *args, **kwargs)
 
     def _clone(self, klass=None, setup=False, **kwargs):
         """ override _clone method to preserve 'at_time' attribute while cloning
         queryset - in stacked filters, excludes etc. """
         #kwargs['_at_time'] = self._at_time # an alternative way of saving time
-        c = super(BaseQuerySetExtension, self)._clone(klass, setup, **kwargs)
+        c = super(QuerySetMixin, self)._clone(klass, setup, **kwargs)
         c._at_time = self._at_time
         c._time_injected = self._time_injected
         return c
@@ -136,7 +136,7 @@ class BaseQuerySetExtension(object):
     def iterator(self):
         """ need to inject version time before executing against database """
         self.inject_time()
-        for obj in super(BaseQuerySetExtension, self).iterator():
+        for obj in super(QuerySetMixin, self).iterator():
             yield obj
 
     def count(self):
@@ -146,7 +146,7 @@ class BaseQuerySetExtension(object):
         meaningless filter, which doesn't change the *count* query. """
         q = self.filter(pk__gt=0)
         q.inject_time()
-        return super(BaseQuerySetExtension, q).count()
+        return super(QuerySetMixin, q).count()
 
     def delete(self):
         """ deletion for versioned objects means setting the 'ends_at' field 
@@ -155,33 +155,33 @@ class BaseQuerySetExtension(object):
         now = datetime.now()
 
         # select active records
-        self.filter(ends_at__isnull = True)
+        self.filter(ends_at__isnull=True)
 
         # delete records - this is the standard QuerySet update call
-        super(BaseQuerySetExtension, self).update(ends_at = now)
+        super(QuerySetMixin, self).update(ends_at=now)
 
     def exists(self):
         """ exists if there is at least one record with ends_at = NULL """
         q = self.filter(ends_at__isnull=True)
-        return super(BaseQuerySetExtension, q).exists()
+        return super(QuerySetMixin, q).exists()
 
     def in_bulk(self):
         raise NotImplementedError("Not implemented for versioned objects")
 
 
-class M2MQuerySet( BaseQuerySetExtension, QuerySet ):
+class M2MQuerySet(QuerySetMixin, QuerySet):
     pass
 
-class VersionedValuesQuerySet( BaseQuerySetExtension, ValuesQuerySet ):
+class VersionedValuesQuerySet(QuerySetMixin, ValuesQuerySet):
     pass
 
-class VersionedValuesListQuerySet( BaseQuerySetExtension, ValuesListQuerySet ):
+class VersionedValuesListQuerySet(QuerySetMixin, ValuesListQuerySet):
     pass
 
-class VersionedDateQuerySet( BaseQuerySetExtension, DateQuerySet ):
+class VersionedDateQuerySet(QuerySetMixin, DateQuerySet):
     pass
 
-class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
+class VersionedQuerySet(QuerySetMixin, QuerySet):
     """ An extension for a core QuerySet that supports versioning by overriding 
     some key functions, like create etc. """
 
@@ -209,45 +209,12 @@ class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
 
     def bulk_create(self, objects):
         """ wrapping around a usual bulk_create to provide version-specific 
-        information for all objects. As with original bulk creation, 
-        reverse relationships and M2Ms are not supported!"""
-
-        # TODO remove this method?
-
-        now = datetime.now()
-
-        # step 1: validation + versioned objects update
-        val_flag = False
-        guids_to_close = []
-        processed = []
-        to_submit = []
-        for obj in objects:
-            if obj.guid: # existing object, need to close old version later
-                if obj.pk in processed:
-                    break
-                guids_to_close.append( str( obj.guid ) )
-            else:  # new object
-                obj.local_id = self.model._get_new_local_id()
-            processed.append( obj.pk )
-            obj.date_created = obj.date_created or now
-            obj.starts_at = now
-            # compute unique hash (after updating object and starts_at)
-            obj.guid = create_hash_from( obj )
-            if not val_flag: # clean only one object for speed
-                obj.full_clean()
-                val_flag = True
-            to_submit.append( obj )
-
-        # TODO insert here the transaction begin
-
-        # step 2: close old records (!) use simpler delete from BaseQuerySetExtension
-        super(VersionedQuerySet, self.filter( guid__in = guids_to_close )).delete()
-
-        # step 3: create objects in bulk
-        return super(VersionedQuerySet, self).bulk_create( to_submit )
-
-        # TODO insert here the transaction end
-
+        information for all objects. ITERATES over all objects and saves them
+        correctly (slow). As with original bulk creation, reverse relationships
+        and M2Ms are not supported. WARNING: has side-effects"""
+        with transaction.commit_on_success_unless_managed(using=self.db):
+            for obj in objects:
+                obj.save()
 
     def update(self, **kwargs):
         """ update objects with new attrs and FKs """
@@ -256,14 +223,15 @@ class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
             for obj in objs:
                 for name, value in kwargs.items():
                     setattr(obj, name, value)
-            return self.bulk_create( objs )
+            return self.bulk_create(objs)
         return self
 
+    # TODO refactor this: related m2ms should be closed, by appropriate manager
     def delete(self):
         """ a special versioned delete, which removes appropriate direct and 
         reversed m2ms relations for the objects that are going to be deleted """
         now = datetime.now()
-        pks = list( self.values_list('pk', flat=True) ) # ids of main objects
+        pks = list(self.values_list('pk', flat=True))  # ids of main objects
 
         # TODO insert here the transaction begin
 
@@ -281,7 +249,7 @@ class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
             filt = {}
             filt[m2m_field.m2m_field_name() + '_id__in'] = pks
             filt['ends_at__isnull'] = True
-            m2m_field.rel.through.objects.filter( **filt ).update( ends_at = now )
+            m2m_field.rel.through.objects.filter(**filt).update(ends_at = now)
 
         # 4. delete all reversly related m2ms
         rel_objs = self.model._meta.get_all_related_objects()
@@ -291,13 +259,13 @@ class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
             filt = {}
             filt[m2m_related.field.name + '_id__in'] = pks
             filt['ends_at__isnull'] = True
-            m2m_related.model.objects.filter( **filt ).update( ends_at = now )
+            m2m_related.model.objects.filter(**filt).update(ends_at = now)
 
         # 5. update parent eTags
         for field, upd_ids in par_for_update.items():
             parents = field.rel.to.objects.filter(pk__in=upd_ids)
             if parents:
-                field.rel.to.objects.get_query_set().bulk_create( parents )
+                field.rel.to.objects.get_query_set().bulk_create(parents)
 
                 # TODO insert here the transaction end
 
@@ -305,5 +273,4 @@ class VersionedQuerySet( BaseQuerySetExtension, QuerySet ):
         """ every object has a global ID (basically it's a hash of it's JSON 
         representation). As this ID is unique, one can request an object by it's
         GUID directly."""
-        return self.get( guid = guid )
-
+        return self.get(guid=guid)
