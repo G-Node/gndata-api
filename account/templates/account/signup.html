@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Create an account{% endblock %}
+
+{% block content %}
+    <h1>Create an account</h1>
+
+    {% if form.errors %}
+        <p>There are some errors.</p>
+    {% endif %}
+
+    <form class="form-horizontal" action="" method="post">
+        {% csrf_token %}
+
+        {% include "form.html" %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create the account</button>
+        </div>
+    </form>
+{% endblock %}

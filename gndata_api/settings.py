@@ -58,6 +58,14 @@ WSGI_APPLICATION = 'gndata_api.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'gndata-api',
+        'PASSWORD': 'pass',
+        'USER': 'portal',
+        'HOST': '',
+        'PORT': ''
+    },
+    'mysql': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }

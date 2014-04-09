@@ -9,30 +9,13 @@
     <form class="form-horizontal" method="post" action="{% url 'django.contrib.auth.views.login' %}">
         {% csrf_token %}
 
-        <fieldset>
+        {% include "form.html" %}
 
-            <div class="control-group" id="username_field">
-                <label class="control-label" for="currentUsername">{{ form.username.label_tag }}</label>
-                <div class="controls">
-                    <input type="username" id="currentUsername" name="username" class="input-xlarge">
-                </div>
-            </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Login</button>
+        </div>
 
-            <div class="control-group" id="password_field">
-                <label class="control-label" for="currentPassword">{{ form.password.label_tag }}</label>
-                <div class="controls">
-                    <input type="password" id="currentPassword" name="password" class="input-xlarge">
-                    <span class="help-block"></span>
-                </div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Login</button>
-            </div>
-
-        </fieldset>
-
-        <input type="hidden" name="next" value="{{ next }}" />
+        <input type="hidden" name="next" value="/home/" />
     </form>
 
 {% endblock %}

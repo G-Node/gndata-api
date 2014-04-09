@@ -80,14 +80,15 @@
 
                     <ul class="dropdown-menu" role="menu" aria-labelledby="usermenu">
                         <li role="presentation">
-                            <a role="menuitem" tabindex="-1" href="{% url 'django.contrib.auth.views.logout' %}">Logout</a>
+                            <a role="menuitem" tabindex="-1" href="{% url 'logout' %}">Logout</a>
                         </li>
                     </ul>
                 </li>
 
                 {% else %}
 
-                <li><a href="{% url 'django.contrib.auth.views.login' %}">Login</a></li>
+                <li><a href="{% url 'signup' %}">Sign Up</a></li>
+                <li><a href="{% url 'login' %}">Login</a></li>
 
                 {% endif %}
             </ul>

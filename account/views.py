@@ -1,16 +1,16 @@
-from django.shortcuts import render, render_to_response
-from django.contrib.auth.forms import UserCreationForm
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from account.forms import SignUpForm
+
 
 def signup(request):
-    if request.method =='POST':
-        form = UserCreationForm(request.POST)
-        if form.is_valid():
-            user = User.objects.create_user(form.cleaned_data['username'], None, form.cleaned_data['password1'])
-            user.save()
-            return render_to_response('QCM/index.html')  # Redirect after POST
-    else:
-        form = UserCreationForm()  # An unbound form
 
-    return render_to_response('register.html', {
-            'form': form,
-        },context_instance=RequestContext(request))
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            new_user = form.save()
+            return HttpResponseRedirect("/account/login")
+    else:
+        form = SignUpForm()
+
+    return render(request, "account/signup.html", {'form': form})
