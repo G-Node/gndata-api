@@ -56,6 +56,11 @@ class VReverseManyRelatedObjectsDescriptor(ReverseManyRelatedObjectsDescriptor):
 #===============================================================================
 
 class VersionedForeignKey(models.ForeignKey):
+
+    def __init__(self, *args, **kwargs):
+        super(VersionedForeignKey, self).__init__(*args, **kwargs)
+        self.db_constraint = False
+
     def contribute_to_class(self, cls, name, virtual_only=False):
         super(VersionedForeignKey, self).contribute_to_class(cls, name,
                                                              virtual_only)
@@ -63,6 +68,10 @@ class VersionedForeignKey(models.ForeignKey):
 
 
 class VersionedManyToManyField(models.ManyToManyField):
+
+    def __init__(self, *args, **kwargs):
+        super(VersionedManyToManyField, self).__init__(*args, **kwargs)
+        self.db_constraint = False
 
     def contribute_to_class(self, cls, name):
         super(VersionedManyToManyField, self).contribute_to_class(cls, name)
