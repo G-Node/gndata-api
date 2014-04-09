@@ -194,9 +194,9 @@ class ObjectState(models.Model):
         """ by default object is accessible for it's owner """
         return self.owner == user
 
-    def delete(self):
+    def delete(self, using=None):
         """ uses queryset delete() method to perform versioned deletion """
-        self.__class__.objects.filter(pk=self.pk).delete()
+        self.__class__.objects.filter(pk=self.pk).delete(using=using)
 
     def save(self, *args, **kwargs):
         """ implements versioning by always saving new object. This should be

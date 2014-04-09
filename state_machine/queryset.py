@@ -4,13 +4,15 @@ from django.db import models, connection, transaction
 from django.db.models.query import QuerySet, ValuesQuerySet, ValuesListQuerySet, DateQuerySet
 from django.db.models.sql.where import AND
 from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor
+from django.db.models.fields.related import ManyRelatedObjectsDescriptor
+from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
 from django.db.models import Q
 
 from gndata_api.utils import *
 
 
 #===============================================================================
-# Field and Descriptor subclasses for VERSIONED Reverse Single relationships
+# Descriptor subclasses for VERSIONED relationships
 #===============================================================================
 
 class VReverseSingleRelatedObjectDescriptor(ReverseSingleRelatedObjectDescriptor):
@@ -21,8 +23,9 @@ class VReverseSingleRelatedObjectDescriptor(ReverseSingleRelatedObjectDescriptor
     equal to the the original object '_at_time'. So we do need to override the
     'get_query_set' method only. """
 
-    def get_query_set(self, **db_hints):
-        qs = super(VReverseSingleRelatedObjectDescriptor, self).get_query_set(**db_hints)
+    def get_queryset(self, **db_hints):
+        qs = super(VReverseSingleRelatedObjectDescriptor,
+                   self).get_queryset(**db_hints)
 
         # assign _at_time to the qs if needed
         if db_hints.has_key('instance'):
@@ -35,10 +38,42 @@ class VReverseSingleRelatedObjectDescriptor(ReverseSingleRelatedObjectDescriptor
         return qs
 
 
+class VManyRelatedObjectsDescriptor(ManyRelatedObjectsDescriptor):
+
+    def related_manager_cls(self):
+        # one can do some monkey patching here
+        return super(VManyRelatedObjectsDescriptor, self).related_manager_cls()
+
+
+class VReverseManyRelatedObjectsDescriptor(ReverseManyRelatedObjectsDescriptor):
+
+    def related_manager_cls(self):
+        # one can do some monkey patching here
+        return super(VReverseManyRelatedObjectsDescriptor, self).related_manager_cls()
+
+#===============================================================================
+# Field subclasses for VERSIONED relationships
+#===============================================================================
+
 class VersionedForeignKey(models.ForeignKey):
-    def contribute_to_class(self, cls, name):
-        super(VersionedForeignKey, self).contribute_to_class(cls, name)
+    def contribute_to_class(self, cls, name, virtual_only=False):
+        super(VersionedForeignKey, self).contribute_to_class(cls, name,
+                                                             virtual_only)
         setattr(cls, self.name, VReverseSingleRelatedObjectDescriptor(self))
+
+
+class VersionedManyToManyField(models.ManyToManyField):
+
+    def contribute_to_class(self, cls, name):
+        super(VersionedManyToManyField, self).contribute_to_class(cls, name)
+        setattr(cls, self.name, VReverseManyRelatedObjectsDescriptor(self))
+
+    def contribute_to_related_class(self, cls, related):
+        super(VersionedManyToManyField, self).contribute_to_class(cls, related)
+        if not self.rel.is_hidden() and not related.model._meta.swapped:
+            setattr(cls, related.get_accessor_name(),
+                    VManyRelatedObjectsDescriptor(related))
+
 
 #===============================================================================
 # VERSIONED QuerySets
@@ -207,13 +242,13 @@ class VersionedQuerySet(QuerySetMixin, QuerySet):
                 obj._at_time = self._at_time
             yield obj
 
-    def bulk_create(self, objects):
+    def bulk_create(self, objs, batch_size=None):
         """ wrapping around a usual bulk_create to provide version-specific 
         information for all objects. ITERATES over all objects and saves them
         correctly (slow). As with original bulk creation, reverse relationships
         and M2Ms are not supported. WARNING: has side-effects"""
         with transaction.commit_on_success_unless_managed(using=self.db):
-            for obj in objects:
+            for obj in objs:
                 obj.save()
 
     def update(self, **kwargs):
@@ -226,32 +261,25 @@ class VersionedQuerySet(QuerySetMixin, QuerySet):
             return self.bulk_create(objs)
         return self
 
-    # TODO refactor this: related m2ms should be closed, by appropriate manager
     def delete(self):
         """ a special versioned delete, which removes appropriate direct and 
         reversed m2ms relations for the objects that are going to be deleted """
+        super(VersionedQuerySet, self).delete()
+
+        # TODO check whether related m2m are correctly deleted
+
+        """
         now = datetime.now()
         pks = list(self.values_list('pk', flat=True))  # ids of main objects
 
-        # TODO insert here the transaction begin
-
-        # 1. collect parent objects eTags
-        par_for_update = {}
-        for field in [f for f in self.model._meta.local_fields if \
-                      isinstance(f, VersionedForeignKey)]:
-            par_for_update[field] = list(self.values_list(field.attname, flat=True))
-
-        # 2. delete main records
-        super(VersionedQuerySet, self).delete()
-
-        # 3. delete all directly related m2ms
+        # delete all directly related m2ms
         for m2m_field in self.model._meta.many_to_many:
             filt = {}
             filt[m2m_field.m2m_field_name() + '_id__in'] = pks
             filt['ends_at__isnull'] = True
             m2m_field.rel.through.objects.filter(**filt).update(ends_at = now)
 
-        # 4. delete all reversly related m2ms
+        # delete all reversly related m2ms
         rel_objs = self.model._meta.get_all_related_objects()
         reverse_related = [x for x in rel_objs if 'VersionedM2M' in \
                                                   [cls.__name__ for cls in x.model.mro()]]
@@ -260,14 +288,7 @@ class VersionedQuerySet(QuerySetMixin, QuerySet):
             filt[m2m_related.field.name + '_id__in'] = pks
             filt['ends_at__isnull'] = True
             m2m_related.model.objects.filter(**filt).update(ends_at = now)
-
-        # 5. update parent eTags
-        for field, upd_ids in par_for_update.items():
-            parents = field.rel.to.objects.filter(pk__in=upd_ids)
-            if parents:
-                field.rel.to.objects.get_query_set().bulk_create(parents)
-
-                # TODO insert here the transaction end
+        """
 
     def get_by_guid(self, guid):
         """ every object has a global ID (basically it's a hash of it's JSON 
