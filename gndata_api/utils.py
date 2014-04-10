@@ -1,7 +1,6 @@
 from django.contrib.auth.models import User
 
 import os
-import hashlib
 import urlparse
 import string
 import random
@@ -89,16 +88,6 @@ def build_obj_location(model, id):
     id = str(id) # make sure type is string, for objects like user
     url_base = get_url_base(model)
     return os.path.join(url_base, id) + '/'
-
-# TODO make based on UUID
-def create_hash_from(obj):
-    """ computes the unique object identifier. We balance between two 
-    options of having a unique GUID:
-    - only across objects, not object versions
-    - across object versions too (every version has a different GUID)
-    For the moment the second option (full uniqueness) is implemented.
-    """
-    return hashlib.sha1( ''.join([obj.get_absolute_url(), str(obj.starts_at)]) ).hexdigest()
 
 
 def base32str(value):

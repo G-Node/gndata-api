@@ -33,10 +33,13 @@ class Assets(object):
         fm3 = FakeModel.objects.create(test_attr=3, owner=owner)
 
         fp1 = FakeParentModel.objects.create(test_attr=1, owner=owner)
-        fp1.m2m.add(fm1)
-        fp1.m2m.add(fm2)
+
+        # this is how m2m are created now. TODO fix
+        fp1.m2m.through.objects.create(parent=fp1, fake=fm1)
+        fp1.m2m.through.objects.create(parent=fp1, fake=fm2)
+
         fp2 = FakeParentModel.objects.create(test_attr=2, owner=owner)
-        fp2.m2m.add(fm2)
+        fp2.m2m.through.objects.create(parent=fp2, fake=fm2)
 
         FakeChildModel.objects.create(test_attr=1, test_ref=fp1, owner=owner)
         FakeChildModel.objects.create(test_attr=1, test_ref=fp1, owner=owner)

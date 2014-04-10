@@ -1,4 +1,5 @@
-import datetime
+import datetime, time
+from django.utils import timezone
 
 from django.test import TestCase
 from django.core.exceptions import ObjectDoesNotExist
@@ -123,8 +124,10 @@ class TestObjectRelations(TestCase):
         fake_models = [FakeModel, FakeParentModel, FakeChildModel]
         for model in fake_models:
             update_keys_for_model(model)
+
+        Assets.fill()
         self.owner = User.objects.get(pk=1)
-        self.origin = datetime.datetime.now()
+        self.origin = timezone.now()
 
     def test_fk_parent(self):
         self.assertEqual(Assets.fc(1).test_ref.test_attr, 1)
@@ -246,11 +249,14 @@ class TestObjectState(TestCase):
         fake_models = [FakeModel, FakeParentModel, FakeChildModel]
         for model in fake_models:
             update_keys_for_model(model)
+
+        Assets.fill()
+        self.origin = timezone.now()
         self.owner = User.objects.get(pk=1)
-        self.origin = datetime.datetime.now()
+        time.sleep(1)
 
     def test_save_create(self):
-        fm = FakeModel(test_attr=271828)
+        fm = FakeModel(test_attr=271828, owner=self.owner)
         fm.save()
         self.assertTrue(FakeModel.objects.filter(test_attr=271828).exists())
 
@@ -265,13 +271,13 @@ class TestObjectState(TestCase):
         self.assertEqual(FakeModel.objects.get(test_attr=271828).pk, fm.pk)
 
         qs = FakeModel.objects.filter(at_time=self.origin)
-        self.assertFalse(qs.filter(pk=fm.pk).test_attr == 271828)
+        self.assertFalse(qs.filter(pk=fm.pk)[0].test_attr == 271828)
 
     def test_delete(self):
         fp1 = Assets.fp(1)
         fp1.delete()
 
-        self.assertRaises(ObjectDoesNotExist, Assets.fp(1))
+        self.assertFalse(FakeParentModel.objects.filter(test_attr=1).exists())
 
         old_fp1 = Assets.fp(1, self.origin)
         self.assertTrue(old_fp1.test_attr, 1)
@@ -280,5 +286,3 @@ class TestObjectState(TestCase):
 
     def tearDown(self):
         Assets.flush()
-
-

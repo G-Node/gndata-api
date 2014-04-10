@@ -1,124 +1,11 @@
-from datetime import datetime
-
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from managers import VersionManager, VersionedM2MManager, VersionedObjectManager
+from state_machine.versioning.models import BaseVersionedObject
 from gndata_api.utils import *
 
 
-"""
-Basic Version Control implementation features.
-
-
-1. Database representation
---------------------------------------------------------------------------------
-a) Table for a versioned model
-every object has 'starts_at' and 'ends_at' fields. Current (latest) object 
-version always has 'ends_at' = NULL, all previous versions have 'ends_at' set 
-with the datetime equals to the 'starts_at' field of the next version. Thus 
-every version is a new row in the database; all unchanged attributes are 
-redundantly copied.
-
-b) How do foreign keys work
-we make django think that 'local_id' (non-unique across versions) is the PK for
-any model. This allows using normal django ORM (calling lazy relations like 
-event.segment etc.), and to avoid duplicated by fetching several object 
-versions, we set an additional filters on the original object manager, as well 
-as we proxy these filters to the managers that fetch related objects. 
-Intuitively it could be understood looking at the SQL level: the extended 
-relations managers make every SQL request to the database containing constraints
-on all JOINs (like 'ends_at' = NULL), thus fetching only single version of any 
-relation object.
-
-c) Table holding M2M relationship between versioned models
-M2M relations are also versioned. To support that we created a base class that 
-supports versioning ('VersionedM2M'), which should be used as a proxy model for
-versioned M2M relations. This 'VersionedM2M' class stands 'in between' two 
-models and holds versioned references to both of them, and replaces default 
-django-based M2M relation manager class.
-
-
-2. A trick with Primary Key
---------------------------------------------------------------------------------
-By default the PK for every versioned model to a non-auto incremental 'local_id' 
-field. This field is updated manually and is actually unique across objects but 
-not across versions of the same object as well as not unique across rows in the 
-DB table, so all versions of the same object have the same 'local_id' value. 
-This PK is needed for django to auto-build relationships via FKs and M2Ms.
-However, to get the correct database behaviour after the initial table creation 
-the custom SQL changes this PK to the real globally unique PK field called 
-'guid' - every versioned model has it (see 'ObjectState' class).
-
-
-3. Base class supporting versioning for other apps
---------------------------------------------------------------------------------
-All versioned models should inherit from 'ObjectState'. In this base class all
-features of the versioned object are implemented.
-
-
-4. Model manager
---------------------------------------------------------------------------------
-To support versioning, managers are extended with '_at_time' attribute, used in 
-case some older object version is requested. Manager sets appropriate filters on
-the QuerySet when 'at_time' parameter is provided in the request (MUST be always
-a first filter, for example:
-
-VersionedManager.filter(at_time='2012-07-26 17:16:12').filter(...))
-
-
-5. Versioned QuerySet
---------------------------------------------------------------------------------
-is extended with the automatic support for timing of the objects to fetch from 
-the db, thus implementing object versioning.
-
-
-6. ORM extentions that support lazy relations
---------------------------------------------------------------------------------
-important:
- - use VersionedForeignKey instead of ForeignKey field
- - create M2Ms 'through' model, subclassed from 'VersionedM2M' class
-
-this allows relations to be versioned.
-
-a) Reverse Single Related:
-is implemented by overriding a ForeignKey class by VersionedForeignKey, namely 
-the 'contribute_to_class' method to assign different descriptor at instance 
-initialization time. New descriptor (VReverseSingleRelatedObjectDescriptor 
-class) differs only by the 'get_query_set' method, which returns a correct 
-VersionedQuerySet instance that supports versioning and hits the database with 
-time, equal to the time of the original object, when appropriate parent object 
-is called. 
-
-b) Foreign Related and all M2M Objects:
-all '<object_type>_set' attributes are wrapped in the base class (ObjectState) 
-in __getattribute__ by assigning the time to the RelatedManager, returned by 
-default by the '<object_type>_set' descriptor. Thus the RelatedManager knows 
-about timing to request related objects from the database, equal to the time of
-the original object.
-
-"""
-
-
-#===============================================================================
-# Base models for a Versioned Object, M2M relations and Permissions management
-#===============================================================================
-
-
-class VersionedM2M(models.Model):
-    """ this abstract model is used as a connection between two objects for many 
-    to many relationship for versioned objects instead of ManyToMany field. """
-
-    date_created = models.DateTimeField(editable=False)
-    starts_at = models.DateTimeField(serialize=False, default=datetime.now, editable=False)
-    ends_at = models.DateTimeField(serialize=False, blank=True, null=True, editable=False)
-    objects = VersionedM2MManager()
-
-    class Meta:
-        abstract = True
-
-
-class ObjectState(models.Model):
+class ObjectState(BaseVersionedObject):
     """
     A base class for a versioned G-Node object.
 
@@ -128,38 +15,14 @@ class ObjectState(models.Model):
     There are two types of object IDs:
     - 'guid' - a hash of an object, a unique global object identifier (GUID)
     - 'local_id' - object ID invariant across object versions
-
     """
-    # global ID, distinct for every object version = unique table PK
-    guid = models.CharField(max_length=40, editable=False)
     # local ID, invariant between object versions, distinct between objects
     # local ID + starts_at basically making a PK
     local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
     owner = models.ForeignKey(User, editable=False)
-    date_created = models.DateTimeField(editable=False)
-    starts_at = models.DateTimeField(serialize=False, default=datetime.now, editable=False)
-    ends_at = models.DateTimeField(serialize=False, blank=True, null=True, editable=False)
-    objects = VersionedObjectManager()
-    _at_time = None  # indicates an older version for object instance
 
     class Meta:
         abstract = True
-
-    def __getattribute__(self, name):
-        """ wrap getting object attributes to catch calls to related managers,
-        which require '_at_time' parameter to retrieve related objects at time,
-        equal to the original object.
-
-        Direct FK, direct M2M or reverse M2M related manager is requested. By
-        adding '_at_time' attribute we make the related manager support
-        versioning by requesting related objects at the time equal to the
-        original object ('self' in this case). For reverse FKs (like
-        'event.segment') we need to override related descriptor, see
-        'VersionedForeignKey' field class. """
-        attr = object.__getattribute__(self, name)
-        if isinstance(attr, VersionManager) and self._at_time:
-            attr._at_time = self._at_time
-        return attr
 
     @property
     def local_id_as_str(self):
@@ -191,34 +54,6 @@ class ObjectState(models.Model):
     def is_accessible(self, user):
         """ by default object is accessible for it's owner """
         return self.owner == user
-
-    def delete(self, using=None):
-        """ uses queryset delete() method to perform versioned deletion """
-        self.__class__.objects.filter(pk=self.pk).delete(using=using)
-
-    def save(self, *args, **kwargs):
-        """ implements versioning by always saving new object. This should be
-        already an atomic operation """
-
-        now = datetime.now()
-
-        guid_to_delete = None
-        if self.guid:  # existing object, need to "close" old version later
-            guid_to_delete = self.guid
-
-        else:  # new object
-            self.local_id = get_new_local_id()
-
-        self.date_created = self.date_created or now
-        self.starts_at = now
-        self.guid = create_hash_from(self)
-        self.full_clean()
-
-        kwargs['force_insert'] = True
-        super(ObjectState, self).save(*args, **kwargs)
-
-        if guid_to_delete is not None:
-            self.__class__.objects.filter(guid=guid_to_delete).delete()
 
 
 class SafetyLevel(models.Model):

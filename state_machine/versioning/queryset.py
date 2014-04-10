@@ -1,87 +1,12 @@
-from datetime import datetime
+from django.utils import timezone
 
-from django.db import models, connection, transaction
+from django.db import connection, transaction
 from django.db.models.query import QuerySet, ValuesQuerySet, ValuesListQuerySet, DateQuerySet
 from django.db.models.sql.where import AND
-from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor
-from django.db.models.fields.related import ManyRelatedObjectsDescriptor
-from django.db.models.fields.related import ReverseManyRelatedObjectsDescriptor
+
 from django.db.models import Q
 
 from gndata_api.utils import *
-
-
-#===============================================================================
-# Descriptor subclasses for VERSIONED relationships
-#===============================================================================
-
-class VReverseSingleRelatedObjectDescriptor(ReverseSingleRelatedObjectDescriptor):
-    """ To natively support versioned objects, we need to proxy object's time
-    ('_at_time') parameter across object descriptors. To fetch related objects 
-    at the time, equal to the time of the original object, the corresponding 
-    QuerySet should be interfaced as VersionedQuerySet with '_at_time' parameter
-    equal to the the original object '_at_time'. So we do need to override the
-    'get_query_set' method only. """
-
-    def get_queryset(self, **db_hints):
-        qs = super(VReverseSingleRelatedObjectDescriptor,
-                   self).get_queryset(**db_hints)
-
-        # assign _at_time to the qs if needed
-        if db_hints.has_key('instance'):
-            if isinstance(db_hints['instance'], self.field.model):
-                inst = db_hints['instance']
-                if hasattr(inst, '_at_time'):
-                    at_time = inst._at_time
-                    if at_time:
-                        qs._at_time = at_time
-        return qs
-
-
-class VManyRelatedObjectsDescriptor(ManyRelatedObjectsDescriptor):
-
-    def related_manager_cls(self):
-        # one can do some monkey patching here
-        return super(VManyRelatedObjectsDescriptor, self).related_manager_cls()
-
-
-class VReverseManyRelatedObjectsDescriptor(ReverseManyRelatedObjectsDescriptor):
-
-    def related_manager_cls(self):
-        # one can do some monkey patching here
-        return super(VReverseManyRelatedObjectsDescriptor, self).related_manager_cls()
-
-#===============================================================================
-# Field subclasses for VERSIONED relationships
-#===============================================================================
-
-class VersionedForeignKey(models.ForeignKey):
-
-    def __init__(self, *args, **kwargs):
-        super(VersionedForeignKey, self).__init__(*args, **kwargs)
-        self.db_constraint = False
-
-    def contribute_to_class(self, cls, name, virtual_only=False):
-        super(VersionedForeignKey, self).contribute_to_class(cls, name,
-                                                             virtual_only)
-        setattr(cls, self.name, VReverseSingleRelatedObjectDescriptor(self))
-
-
-class VersionedManyToManyField(models.ManyToManyField):
-
-    def __init__(self, *args, **kwargs):
-        super(VersionedManyToManyField, self).__init__(*args, **kwargs)
-        self.db_constraint = False
-
-    def contribute_to_class(self, cls, name):
-        super(VersionedManyToManyField, self).contribute_to_class(cls, name)
-        setattr(cls, self.name, VReverseManyRelatedObjectsDescriptor(self))
-
-    def contribute_to_related_class(self, cls, related):
-        super(VersionedManyToManyField, self).contribute_to_class(cls, related)
-        if not self.rel.is_hidden() and not related.model._meta.swapped:
-            setattr(cls, related.get_accessor_name(),
-                    VManyRelatedObjectsDescriptor(related))
 
 
 #===============================================================================
@@ -196,17 +121,18 @@ class QuerySetMixin(object):
         """ deletion for versioned objects means setting the 'ends_at' field 
         to the current datetime. Applied only for active versions, having 
         ends_at=NULL """
-        now = datetime.now()
+        now = timezone.now()
 
         # select active records
-        self.filter(ends_at__isnull=True)
+        active = self.filter(ends_at__isnull=True)
 
         # delete records - this is the standard QuerySet update call
-        super(QuerySetMixin, self).update(ends_at=now)
+        super(QuerySetMixin, active).update(ends_at=now)
 
     def exists(self):
         """ exists if there is at least one record with ends_at = NULL """
         q = self.filter(ends_at__isnull=True)
+        q.inject_time()
         return super(QuerySetMixin, q).exists()
 
     def in_bulk(self):
@@ -216,14 +142,18 @@ class QuerySetMixin(object):
 class M2MQuerySet(QuerySetMixin, QuerySet):
     pass
 
+
 class VersionedValuesQuerySet(QuerySetMixin, ValuesQuerySet):
     pass
+
 
 class VersionedValuesListQuerySet(QuerySetMixin, ValuesListQuerySet):
     pass
 
+
 class VersionedDateQuerySet(QuerySetMixin, DateQuerySet):
     pass
+
 
 class VersionedQuerySet(QuerySetMixin, QuerySet):
     """ An extension for a core QuerySet that supports versioning by overriding 
@@ -280,7 +210,7 @@ class VersionedQuerySet(QuerySetMixin, QuerySet):
         # TODO check whether it's needed to update child FKs
 
         """
-        now = datetime.now()
+        now = timezone.now()
         pks = list(self.values_list('pk', flat=True))  # ids of main objects
 
         # delete all directly related m2ms
