@@ -22,6 +22,7 @@ class TestVersionedQuerySet(TestCase):
         Assets.fill()
         self.qs = FakeModel.objects
         self.owner = User.objects.get(pk=1)
+        time.sleep(1)
 
     def test_create(self):
         created = self.qs.create(test_attr=271828, owner=self.owner)
@@ -44,7 +45,7 @@ class TestVersionedQuerySet(TestCase):
         count = self.qs.count()
 
         self.qs.filter(pk=obj.pk).delete()
-        self.assertRaises(ObjectDoesNotExist, self.qs.get(pk=obj.pk))
+        self.assertFalse(self.qs.filter(pk=obj.pk).exists())
 
         old_obj = self.qs.filter(at_time=obj.date_created).get(pk=obj.pk)
         self.assertEqual(getattr(old_obj, 'test_attr'), 1)
@@ -87,7 +88,7 @@ class TestVersionedQuerySet(TestCase):
 
         filtered = self.qs.filter(test_attr=271828)
         self.assertEqual(filtered.count(), 1)
-        self.assertEqual(filtered.test_attr, 271828)
+        self.assertEqual(filtered[0].test_attr, 271828)
 
     def tearDown(self):
         Assets.flush()
@@ -155,7 +156,11 @@ class TestObjectRelations(TestCase):
         self.assert_fp1_not_changed(Assets.fp(1, self.origin))
 
     def test_m2m_child_remove(self):
-        Assets.fm(1).fakeparentmodel_set.remove(Assets.fp(1))
+        fm1 = Assets.fm(1)
+        fp1 = Assets.fp(1)
+        through = fm1.fakeparentmodel_set.through
+        through.objects.filter(parent=fp1, fake=fm1).delete()
+
         self.assertFalse(Assets.fm(1).fakeparentmodel_set.exists())
         self.assertEqual(Assets.fp(1).m2m.all().count(), 1)
         self.assertEqual(Assets.fp(1).m2m.all()[0].test_attr, 2)
@@ -165,7 +170,11 @@ class TestObjectRelations(TestCase):
 
     def test_m2m_child_add(self):
         self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
-        Assets.fm(3).fakeparentmodel_set.add(Assets.fp(2))
+
+        fm3 = Assets.fm(3)
+        fp2 = Assets.fp(2)
+        fm3.fakeparentmodel_set.through.objects.create(parent=fp2, fake=fm3)
+
         self.assertTrue(Assets.fm(3).fakeparentmodel_set.exists())
         self.assertEqual(Assets.fm(3).fakeparentmodel_set.all()[0].test_attr, 2)
         self.assertEqual(Assets.fp(2).m2m.all().count(), 2)
@@ -182,8 +191,10 @@ class TestObjectRelations(TestCase):
         self.assert_fc1_not_changed(Assets.fc(1, self.origin))
 
     def test_all_parent_remove(self):
-        Assets.fp(1).m2m.remove(Assets.fm(1))
-        Assets.fp(1).fakechildmodel_set.remove(Assets.fc(1))
+        fp1 = Assets.fp(1)
+        fp1.m2m.through.objects.filter(parent=fp1, fake=Assets.fm(1)).delete()
+        Assets.fp(1).fakechildmodel_set.remove(Assets.fc(1))  #??
+
         self.assertEqual(Assets.fp(1).m2m.all()[0].test_attr, 2)
         self.assertEqual(Assets.fp(1).fakechildmodel_set.all()[0].test_attr, 2)
         self.assertTrue(Assets.fc(1).test_ref is None)
@@ -194,7 +205,8 @@ class TestObjectRelations(TestCase):
         self.assert_fm1_not_changed(Assets.fm(1, self.origin))
 
     def test_all_parent_add(self):
-        Assets.fp(1).m2m.add(Assets.fm(3))
+        fp1 = Assets.fp(1)
+        fp1.m2m.through.objects.create(parent=fp1, fake=Assets.fm(3))
         self.assertEqual(Assets.fp(1).m2m.all().count(), 3)
         self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
 
