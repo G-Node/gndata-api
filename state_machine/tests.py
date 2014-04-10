@@ -1,154 +1,238 @@
-from state_machine.models import ObjectState, SafetyLevel, VersionedM2M, ObjectExtender
-from state_machine.queryset import VersionedForeignKey
-
-import time
 import datetime
 
-from django.db import models
-from django.db import connection
 from django.test import TestCase
-from django.core.management.color import no_style
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 
-#===============================================================================
-""" Fake but *instantiatable* classes are defined here to test abstract classes
-for state_machine models. """
+from state_machine.fake import *
+from state_machine.assets import Assets
 
-class FakeModel( ObjectState ):
-    """ simple versioned model """
-    test_attr = models.IntegerField()
-
-class FakeParentModel( ObjectState ):
-    """ versioned model with M2M relationship and reverse FK relationship """
-    test_attr = models.IntegerField()
-    m2m = models.ManyToManyField(FakeModel, through='parent_fake', blank=True, null=True)
-
-class FakeChildModel( ObjectState ):
-    """ simple versioned model with parent """
-    test_attr = models.IntegerField()
-    test_ref = VersionedForeignKey( FakeParentModel )
-
-class parent_fake( VersionedM2M ):
-    """ M2M relationship class """
-    parent = VersionedForeignKey( FakeParentModel )
-    fake = VersionedForeignKey( FakeModel )
-
-#===============================================================================
-""" these methods create / delete tables for fake models. Actually unittest does
-the creation itself, so create_fake_model() and  delete_fake_model() methods are
-not used."""
-
-def create_fake_model( prototype ):
-    """ Create the schema for our prototype model """
-    sql, _ = connection.creation.sql_create_model(prototype, no_style())
-    _cursor = connection.cursor()
-    for statement in sql:
-        _cursor.execute(statement)
-    # versioned objects require PRIMARY KEY change
-    if issubclass(prototype, ObjectState):
-        update_keys_for_model( prototype )
-
-def update_keys_for_model( model ):
-    """ Versioned models need to have changes in the DB schema, in particular
-    the PK should be changed from 'local_id' to the 'guid' """
-    sql = []
-    db_table = model._meta.db_table
-    sql.append(''.join(["ALTER TABLE `", db_table, "` DROP PRIMARY KEY;"]))
-    sql.append(''.join(["ALTER TABLE `", db_table, "` ADD PRIMARY KEY (`guid`);"]))
-    _cursor = connection.cursor()
-    for statement in sql:
-        _cursor.execute(statement)
-
-def delete_fake_model( model ):
-    """ Delete the schema for the test model """
-    sql = connection.creation.sql_destroy_model(model, (), no_style())
-    _cursor = connection.cursor()
-    for statement in sql:
-        _cursor.execute(statement)
-
-#===============================================================================
-""" Tests """
 
 class TestVersionedQuerySet(TestCase):
     """
     Base test class for versioned QuerySet testing.
     """
-    model = None
     fixtures = ["users.json"]
 
     def setUp(self):
-        update_keys_for_model( FakeModel ) # could be done only once..
-        self.model = FakeModel
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        for model in fake_models:
+            update_keys_for_model(model)
+        Assets.fill()
+        self.qs = FakeModel.objects
+        self.owner = User.objects.get(pk=1)
 
     def test_create(self):
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        self.assertGreater( self.model.objects.count(), 0 )
+        created = self.qs.create(test_attr=271828, owner=self.owner)
+        fetched = self.qs.get(pk=created.pk)
+        self.assertEqual(created.test_attr, fetched.test_attr)
 
     def test_update(self):
-        # 1. create test object
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        time.sleep(1)
+        obj = self.qs.all()[0]
 
-        # 2. update test attribute
-        self.model.objects.filter( pk = obj.pk ).update( test_attr = 2 )
+        self.qs.filter(pk=obj.pk).update(test_attr=271828)
 
-        # 3. make sure it has been changed
-        upd_obj = self.model.objects.get( pk = obj.pk)
-        self.assertEqual( getattr(upd_obj, 'test_attr'), 2 )
+        new_obj = self.qs.get(pk=obj.pk)
+        self.assertEqual(new_obj.test_attr, 271828)
 
-        # 4. make sure older version is correct and accessible
-        old_obj = self.model.objects.filter(at_time = obj.date_created).get( pk = obj.pk )
-        self.assertEqual( getattr(old_obj, 'test_attr'), 1 )
+        old_obj = self.qs.filter(at_time=obj.date_created).get(pk=obj.pk)
+        self.assertEqual(old_obj.test_attr, obj.test_attr)
 
     def test_delete(self):
-        # 1. create test object
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        time.sleep(1)
+        obj = self.qs.all()[0]
+        count = self.qs.count()
 
-        # 2. delete object
-        self.model.objects.filter( pk = obj.pk ).delete()
+        self.qs.filter(pk=obj.pk).delete()
+        self.assertRaises(ObjectDoesNotExist, self.qs.get(pk=obj.pk))
 
-        # 3. make sure it was deleted
-        try:
-            self.model.objects.get( pk = obj.pk )
-        except ObjectDoesNotExist:
-            pass
-        else:
-            raise AssertionError("object was not deleted properly")
-
-        # 4. make sure older version is correct and accessible
-        old_obj = self.model.objects.filter(at_time = obj.date_created).get( pk = obj.pk )
-        self.assertEqual( getattr(old_obj, 'test_attr'), 1 )
+        old_obj = self.qs.filter(at_time=obj.date_created).get(pk=obj.pk)
+        self.assertEqual(getattr(old_obj, 'test_attr'), 1)
+        self.assertEqual(self.qs.count(), count - 1)
 
     def test_bulk_create(self):
         objects = []
+        count = self.qs.count()
+
         for attr in [15, 16, 17]:
-            objects.append( self.model( test_attr = attr, owner = User.objects.get(pk = 1) ) )
-        self.model.objects.bulk_create( objects )
-        self.assertGreater( self.model.objects.count(), 0 )
+            objects.append(FakeModel(test_attr=attr, owner=self.owner))
+
+        self.qs.bulk_create(objects)
+        self.assertEqual(self.qs.count(), count + 3)
 
     def test_exists(self):
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        self.assertTrue( self.model.objects.exists() )
+        self.qs.all().delete()
+        self.assertFalse(self.qs.exists())
+
+        obj = self.qs.create(test_attr=1, owner=self.owner)
+        self.assertTrue(self.qs.exists())
 
     def test_all(self):
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        obj = self.model.objects.create( test_attr = 2, owner = User.objects.get( pk = 1 ) )
-        self.assertEqual( len( self.model.objects.all() ), 2 )
+        count = self.qs.count()
+        self.assertEqual(len(self.qs.all()), count)
+
+        obj = self.qs.create(test_attr=271828, owner=self.owner)
+        self.assertEqual(len(self.qs.all()), count + 1)
 
     def test_count(self):
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        obj = self.model.objects.create( test_attr = 2, owner = User.objects.get( pk = 1 ) )
-        self.assertEqual( self.model.objects.count(), 2 )
+        self.assertEqual(self.qs.count(), 3)
+
+        obj = self.qs.create(test_attr=1, owner=self.owner)
+        self.assertEqual(self.qs.count(), 4)
 
     def test_filter(self):
-        obj = self.model.objects.create( test_attr = 1, owner = User.objects.get( pk = 1 ) )
-        obj = self.model.objects.create( test_attr = 2, owner = User.objects.get( pk = 1 ) )
-        self.assertEqual( self.model.objects.filter( test_attr = 1 ).count(), 1 )
+        self.assertEqual(self.qs.filter(test_attr=1).count(), 1)
+
+        obj = self.qs.create(test_attr=271828, owner=self.owner)
+
+        filtered = self.qs.filter(test_attr=271828)
+        self.assertEqual(filtered.count(), 1)
+        self.assertEqual(filtered.test_attr, 271828)
 
     def tearDown(self):
-        self.model.objects.all().delete()
+        Assets.flush()
+
+
+class TestObjectRelations(TestCase):
+    """
+    Base test class for testing versioned relations implemented in
+    VersionedObjectManager.
+    """
+    fixtures = ["users.json"]
+
+    def assert_fm1_not_changed(self, fm1):
+        self.assertTrue(fm1.fakeparentmodel_set.exists())
+        self.assertEqual(fm1.fakeparentmodel_set.all()[0].test_attr, 1)
+
+    def assert_fm3_not_changed(self, fm3):
+        self.assertFalse(fm3.fakeparentmodel_set.exists())
+
+    def assert_fp1_not_changed(self, fp1):
+        self.assertEqual(fp1.m2m.all().count(), 2)
+        self.assertEqual(fp1.fakechildmodel_set.all().count(), 2)
+
+    def assert_fp2_not_changed(self, fp2):
+        self.assertEqual(fp2.fakechildmodel_set.all().count(), 1)
+
+    def assert_fc1_not_changed(self, fc1):
+        self.assertEqual(fc1.test_ref.test_attr, 1)
+
+    def assert_fc3_not_changed(self, fc3):
+        self.assertEqual(fc3.test_ref.test_attr, 2)
+
+    def setUp(self):
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        for model in fake_models:
+            update_keys_for_model(model)
+        self.owner = User.objects.get(pk=1)
+        self.origin = datetime.datetime.now()
+
+    def test_fk_parent(self):
+        self.assertEqual(Assets.fc(1).test_ref.test_attr, 1)
+        self.assertEqual(Assets.fc(3).test_ref.test_attr, 2)
+
+    def test_fk_child(self):
+        self.assertEqual(Assets.fp(1).fakechildmodel_set.all().count(), 2)
+        self.assertEqual(Assets.fp(2).fakechildmodel_set.all()[0].test_attr, 3)
+
+    def test_m2m_parent(self):
+        self.assertEqual(Assets.fp(1).m2m.all().count(), 2)
+        self.assertEqual(Assets.fp(2).m2m.all()[0].test_attr, 2)
+
+    def test_m2m_child(self):
+        self.assertEqual(Assets.fm(1).fakeparentmodel_set.all()[0].test_attr, 1)
+        self.assertEqual(Assets.fm(2).fakeparentmodel_set.all()[0].test_attr, 2)
+        self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
+
+    def test_m2m_child_delete(self):
+        FakeModel.objects.filter(test_attr=1).delete()
+        self.assertEqual(Assets.fp(1).m2m.all().count(), 1)
+        self.assertEqual(Assets.fp(1).m2m.all()[0].test_attr, 2)
+
+        self.assert_fm1_not_changed(Assets.fm(1, self.origin))
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+
+    def test_m2m_child_remove(self):
+        Assets.fm(1).fakeparentmodel_set.remove(Assets.fp(1))
+        self.assertFalse(Assets.fm(1).fakeparentmodel_set.exists())
+        self.assertEqual(Assets.fp(1).m2m.all().count(), 1)
+        self.assertEqual(Assets.fp(1).m2m.all()[0].test_attr, 2)
+
+        self.assert_fm1_not_changed(Assets.fm(1, self.origin))
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+
+    def test_m2m_child_add(self):
+        self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
+        Assets.fm(3).fakeparentmodel_set.add(Assets.fp(2))
+        self.assertTrue(Assets.fm(3).fakeparentmodel_set.exists())
+        self.assertEqual(Assets.fm(3).fakeparentmodel_set.all()[0].test_attr, 2)
+        self.assertEqual(Assets.fp(2).m2m.all().count(), 2)
+
+        self.assert_fm3_not_changed(Assets.fm(3, self.origin))
+
+    def test_all_parent_delete(self):
+        FakeParentModel.objects.filter(test_attr=1).delete()
+        self.assertFalse(Assets.fm(1).fakeparentmodel_set.exists())
+        self.assertTrue(Assets.fc(1).test_ref is None)
+        self.assertTrue(Assets.fc(2).test_ref is None)
+
+        self.assert_fm1_not_changed(Assets.fm(1, self.origin))
+        self.assert_fc1_not_changed(Assets.fc(1, self.origin))
+
+    def test_all_parent_remove(self):
+        Assets.fp(1).m2m.remove(Assets.fm(1))
+        Assets.fp(1).fakechildmodel_set.remove(Assets.fc(1))
+        self.assertEqual(Assets.fp(1).m2m.all()[0].test_attr, 2)
+        self.assertEqual(Assets.fp(1).fakechildmodel_set.all()[0].test_attr, 2)
+        self.assertTrue(Assets.fc(1).test_ref is None)
+        self.assertFalse(Assets.fm(1).fakeparentmodel_set.exists())
+
+        self.assert_fc1_not_changed(Assets.fc(1, self.origin))
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+        self.assert_fm1_not_changed(Assets.fm(1, self.origin))
+
+    def test_all_parent_add(self):
+        Assets.fp(1).m2m.add(Assets.fm(3))
+        self.assertEqual(Assets.fp(1).m2m.all().count(), 3)
+        self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
+
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+        self.assert_fm3_not_changed(Assets.fm(3, self.origin))
+
+    def test_fk_child_delete(self):
+        FakeChildModel.objects.filter(test_attr=1).delete()
+        self.assertTrue(Assets.fp(1).fakechildmodel_set.all().count(), 1)
+        self.assertEqual(Assets.fp(1).fakechildmodel_set.all()[0].test_attr, 2)
+
+        self.assert_fc1_not_changed(Assets.fc(1, self.origin))
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+
+    def test_fk_child_assign(self):
+        fc1 = Assets.fc(1)
+        fc1.test_ref = Assets.fp(2)
+        fc1.save()
+
+        self.assertEqual(Assets.fc(1).test_ref.test_attr, 2)
+        self.assertTrue(Assets.fp(1).fakechildmodel_set.all().count(), 1)
+        self.assertTrue(Assets.fp(2).fakechildmodel_set.all().count(), 2)
+
+        self.assert_fp1_not_changed(Assets.fp(1, self.origin))
+        self.assert_fc1_not_changed(Assets.fc(1, self.origin))
+        self.assert_fp2_not_changed(Assets.fp(2, self.origin))
+
+    def test_fk_child_remove(self):
+        fc3 = Assets.fc(3)
+        fc3.test_ref = None
+        fc3.save()
+
+        self.assertEqual(Assets.fc(1).test_ref.test_attr, 2)
+        self.assertTrue(Assets.fc(3).test_ref is None)
+        self.assertFalse(Assets.fp(2).fakechildmodel_set.exists())
+
+        self.assert_fc3_not_changed(Assets.fc(3, self.origin))
+        self.assert_fp2_not_changed(Assets.fp(2, self.origin))
+
+    def tearDown(self):
+        Assets.flush()
 
 
 class TestObjectState(TestCase):
@@ -159,113 +243,42 @@ class TestObjectState(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        for model in [FakeModel, FakeParentModel, FakeChildModel]:
-            update_keys_for_model( model ) # could be done only once..
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        for model in fake_models:
+            update_keys_for_model(model)
+        self.owner = User.objects.get(pk=1)
+        self.origin = datetime.datetime.now()
 
-    def test_basic(self):
-        """ basic test to make sure versioned relationships working """
-        owner = User.objects.get( pk = 1 )
+    def test_save_create(self):
+        fm = FakeModel(test_attr=271828)
+        fm.save()
+        self.assertTrue(FakeModel.objects.filter(test_attr=271828).exists())
 
-        # 1. create 3 parent objects: P1, P2, P3
-        parents = []
-        for attr in [1, 2, 3]:
-            par = FakeParentModel.objects.create( test_attr = attr, owner = owner )
-            parents.append( par )
-        for par in parents: # test no children
-            self.assertEqual( par.fakechildmodel_set.count(), 0 )
+        qs = FakeModel.objects.filter(at_time=self.origin)
+        self.assertFalse(qs.filter(test_attr=271828).exists())
 
-        # 2. create two children for P1
-        children = []
-        P1 = FakeParentModel.objects.get( pk=1 )
-        for attr in [1, 2]:
-            chld = FakeChildModel.objects.create( test_attr = attr, owner = \
-                owner, test_ref = P1 )
-            children.append( chld )
-        self.assertEqual( getattr( P1, 'fakechildmodel_set').all().count(), 2 )
+    def test_save_update(self):
+        fm = Assets.fm(1)
+        fm.test_attr = 271828
+        fm.save()
+        self.assertTrue(FakeModel.objects.filter(test_attr=271828).exists())
+        self.assertEqual(FakeModel.objects.get(test_attr=271828).pk, fm.pk)
 
-        # 3. create two M2M objects, referencing P1 and P2 respectively
-        m2ms = []
-        P2 = FakeParentModel.objects.get( pk=2 )
-        for attr in [1, 2]:
-            m2m = FakeModel.objects.create( test_attr = attr, owner = owner )
-            m2ms.append( m2m )
-        m2m1 = FakeModel.objects.get( pk=1 )
-        m2m_ids = [x.pk for x in m2ms]
-        FakeParentModel.save_changes( [P1], {}, {"m2m": m2m_ids}, {}, True )
-        FakeParentModel.save_changes( [P2], {}, {"m2m": m2m_ids}, {}, True )
-        self.assertEqual( getattr( P1, 'm2m').all().count(), 2 )
-        self.assertEqual( getattr( m2m1, 'fakeparentmodel_set').all().count(), 2 )
-        bp = datetime.datetime.now()
-        time.sleep( 1 )
+        qs = FakeModel.objects.filter(at_time=self.origin)
+        self.assertFalse(qs.filter(pk=fm.pk).test_attr == 271828)
 
-        # 4. delete P2
-        P2.delete()
-        self.assertEqual( getattr( m2m1, 'fakeparentmodel_set').all().count(), 1 )
+    def test_delete(self):
+        fp1 = Assets.fp(1)
+        fp1.delete()
 
-        # 5. delete m2m1
-        m2m1.delete()
-        m2m2 = FakeModel.objects.get( pk=2 )
-        self.assertEqual( getattr( P1, 'm2m').all().count(), 1 )
-        self.assertEqual( getattr( P1, 'm2m').all()[0].pk, m2m2.pk )
+        self.assertRaises(ObjectDoesNotExist, Assets.fp(1))
 
-        # 5. delete first child
-        FakeChildModel.objects.get( pk=1 ).delete()
-        self.assertEqual( getattr( P1, 'fakechildmodel_set').all().count(), 1 )
+        old_fp1 = Assets.fp(1, self.origin)
+        self.assertTrue(old_fp1.test_attr, 1)
 
-        # 6. test an old object has all relations
-        P1_old = FakeParentModel.objects.filter(at_time = bp).get( pk=1 )
-        self.assertEqual( getattr( P1_old, 'm2m').all().count(), 2 )
-        self.assertEqual( getattr( P1_old, 'fakechildmodel_set').all().count(), 2 )
-
-    def test_fetch_related(self):
-        """ testing how the fill_relations() function works (fast fetching 
-        objects with relationships) """
-        owner = User.objects.get( pk = 1 )
-
-        # 1. create 2 parent objects: P1, P2
-        P1 = FakeParentModel.objects.create( test_attr = 1, owner = owner )
-        P2 = FakeParentModel.objects.create( test_attr = 2, owner = owner )
-
-        # 2. create 2 children for P1 and 1 for P2
-        C1 = FakeChildModel.objects.create( test_attr=1, owner=owner, test_ref=P1 )
-        C2 = FakeChildModel.objects.create( test_attr=2, owner=owner, test_ref=P1 )
-        C3 = FakeChildModel.objects.create( test_attr=3, owner=owner, test_ref=P2 )
-
-        # 3. create two M2M objects, referencing P1 and P2 respectively
-        m2m1 = FakeModel.objects.create( test_attr = 1, owner = owner )
-        m2m2 = FakeModel.objects.create( test_attr = 2, owner = owner )
-        m2m_ids = [x.pk for x in [m2m1, m2m2]]
-        FakeParentModel.save_changes( [P1], {}, {"m2m": m2m_ids}, {}, True )
-        FakeParentModel.save_changes( [P2], {}, {"m2m": m2m_ids}, {}, True )
-
-        bp = datetime.datetime.now()
-        time.sleep( 1 )
-
-        # assert object has 2 direct children and 2 M2M children
-        P1 = FakeParentModel.objects.filter( pk=1 )
-        P1 = ObjectExtender( P1.model ).fill_relations( P1 )[0]
-        self.assertEqual( len(getattr(P1, 'fakechildmodel_set_buffer_ids')), 2)
-        self.assertEqual( len(getattr(P1, 'm2m_buffer_ids')), 2)
-
-        # delete some relatives
-        C2.delete()
-        m2m2.delete()
-
-        # assert object has now only 1 direct child and 1 M2M child
-        P1 = FakeParentModel.objects.filter( pk=1 )
-        P1 = ObjectExtender( P1.model ).fill_relations( P1 )[0]
-        self.assertEqual( len(getattr(P1, 'fakechildmodel_set_buffer_ids')), 1)
-        self.assertEqual( len(getattr(P1, 'm2m_buffer_ids')), 1)
-
-        # assert previous relations accessible back in time
-        P1 = FakeParentModel.objects.filter( at_time=bp, pk=1 )
-        P1 = ObjectExtender( P1.model ).fill_relations( P1, _at_time=bp )[0]
-        self.assertEqual( len(getattr(P1, 'fakechildmodel_set_buffer_ids')), 2)
-        self.assertEqual( len(getattr(P1, 'm2m_buffer_ids')), 2)
-
+        # relations are tested in *delete methods in TestObjectRelations
 
     def tearDown(self):
-        for model in [FakeModel, FakeParentModel, FakeChildModel, parent_fake]:
-            model.objects.all().delete()
+        Assets.flush()
 
 

@@ -277,6 +277,8 @@ class VersionedQuerySet(QuerySetMixin, QuerySet):
 
         # TODO check whether related m2m are correctly deleted
 
+        # TODO check whether it's needed to update child FKs
+
         """
         now = datetime.now()
         pks = list(self.values_list('pk', flat=True))  # ids of main objects
