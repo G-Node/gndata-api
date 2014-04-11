@@ -22,3 +22,19 @@ class BaseController(object):
 
     def delete(self, request, pk):
         pass
+
+
+class DataAwareMixin(object):
+    """
+    An abstract mixin to BaseController that implements methods that serve
+    datafiles.
+    """
+    pass
+
+
+class AclAwareMixin(object):
+    """
+    An abstract mixin to BaseController that implements permissions managements
+    methods.
+    """
+    pass
