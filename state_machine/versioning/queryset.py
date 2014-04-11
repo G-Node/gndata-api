@@ -155,8 +155,8 @@ class VersionedQuerySet(QuerySet):
 
             else:  # new object
                 obj.pk = get_new_local_id()
+                obj.date_created = now
 
-            obj.date_created = obj.date_created or now
             obj.starts_at = now
             obj.guid = uuid.uuid1().hex
 
