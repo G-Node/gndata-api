@@ -55,6 +55,10 @@ class VersionedForeignKey(models.ForeignKey):
         super(VersionedForeignKey, self).__init__(*args, **kwargs)
         self.db_constraint = False
 
+    def contribute_to_class(self, cls, name, virtual_only=False):
+        super(VersionedForeignKey, self).contribute_to_class(cls, name)
+        setattr(cls, self.name, VReverseSingleRelatedObjectDescriptor(self))
+
 
 class VersionedManyToManyField(models.ManyToManyField):
 

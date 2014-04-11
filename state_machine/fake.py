@@ -22,13 +22,17 @@ class FakeModel(ObjectState):
 class FakeParentModel(ObjectState):
     """ versioned model with M2M relationship and reverse FK relationship """
     test_attr = models.IntegerField()
-    m2m = VersionedManyToManyField(FakeModel, through='parent_fake', blank=True, null=True)
+    m2m = VersionedManyToManyField(
+        FakeModel, through='parent_fake', blank=True, null=True
+    )
 
 
 class FakeChildModel(ObjectState):
     """ simple versioned model with parent """
     test_attr = models.IntegerField()
-    test_ref = VersionedForeignKey(FakeParentModel)
+    test_ref = VersionedForeignKey(
+        FakeParentModel, blank=True, null=True, on_delete=models.SET_NULL
+    )
 
 
 class parent_fake(VersionedM2M):

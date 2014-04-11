@@ -1,6 +1,6 @@
 from django.db import models
 
-from queryset import VersionedQuerySet, M2MQuerySet
+from queryset import VersionedQuerySet
 from gndata_api.utils import *
 
 
@@ -40,7 +40,7 @@ class VersionedM2MManager(VersionManager):
 
     def get_queryset(self, **timeflt):
         """ init QuerySet that supports m2m relations versioning """
-        qs = M2MQuerySet(self.model, using=self._db)
+        qs = VersionedQuerySet(self.model, using=self._db)
         self.proxy_time(qs, **timeflt)
         return qs
 
@@ -53,7 +53,3 @@ class VersionedObjectManager(VersionManager):
         qs = VersionedQuerySet(self.model, using=self._db)
         self.proxy_time(qs, **timeflt)
         return qs
-
-    def get_by_guid(self, guid):
-        """ proxy get_by_guid() method to QuerySet """
-        return self.get_query_set().get_by_guid(guid)

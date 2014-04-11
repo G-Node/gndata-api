@@ -4,9 +4,6 @@ from django.utils import timezone
 from state_machine.versioning.managers import VersionManager
 from state_machine.versioning.managers import VersionedObjectManager
 from state_machine.versioning.managers import VersionedM2MManager
-from gndata_api.utils import *
-
-import uuid
 
 #===============================================================================
 # Base models for a simple Versioned Object, M2M relations
@@ -19,7 +16,14 @@ class BaseVersionedObject(models.Model):
     implements key versioned operations like save or delete.
     """
     # global ID, distinct for every object version = unique table PK
+    # PRIMARY KEY must be swapped with local_id on the database
+    # this is the main cheat: let Django assume that local_id is the primary
+    # key and manage objects transparently from object versions. Database
+    # handles primary key column as a different column instead.
     guid = models.CharField(max_length=40, editable=False)
+    # local ID, invariant between object versions, distinct between objects
+    # local ID + starts_at also making a 'real' PK
+    local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
     date_created = models.DateTimeField(editable=False)
     starts_at = models.DateTimeField(serialize=False, default=timezone.now, editable=False)
     ends_at = models.DateTimeField(serialize=False, blank=True, null=True, editable=False)
@@ -52,32 +56,12 @@ class BaseVersionedObject(models.Model):
     def save(self, *args, **kwargs):
         """ implements versioning by always saving new object. This should be
         already an atomic operation """
-
-        now = timezone.now()
-
-        guid_to_delete = None
-        if self.guid:  # existing object, need to "close" old version later
-            guid_to_delete = self.guid
-
-        else:  # new object
-            self.local_id = get_new_local_id()
-
-        self.date_created = self.date_created or now
-        self.starts_at = now
-        self.guid = uuid.uuid1().hex
-        self.full_clean()
-
-        kwargs['force_insert'] = True
-        super(BaseVersionedObject, self).save(*args, **kwargs)
-
-        if guid_to_delete is not None:
-            self.__class__.objects.filter(guid=guid_to_delete).delete()
+        self.__class__.objects.bulk_create([self])
 
 
 class VersionedM2M(BaseVersionedObject):
     """ this abstract model is used as a connection between two objects for many 
     to many relationship for versioned objects instead of ManyToMany field. """
-
     objects = VersionedM2MManager()
 
     class Meta:

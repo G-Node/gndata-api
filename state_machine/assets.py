@@ -34,7 +34,7 @@ class Assets(object):
 
         fp1 = FakeParentModel.objects.create(test_attr=1, owner=owner)
 
-        # this is how m2m are created now. TODO fix
+        # this is how m2m are created now. TODO fix somehow?
         fp1.m2m.through.objects.create(parent=fp1, fake=fm1)
         fp1.m2m.through.objects.create(parent=fp1, fake=fm2)
 
@@ -42,8 +42,8 @@ class Assets(object):
         fp2.m2m.through.objects.create(parent=fp2, fake=fm2)
 
         FakeChildModel.objects.create(test_attr=1, test_ref=fp1, owner=owner)
-        FakeChildModel.objects.create(test_attr=1, test_ref=fp1, owner=owner)
-        FakeChildModel.objects.create(test_attr=1, test_ref=fp2, owner=owner)
+        FakeChildModel.objects.create(test_attr=2, test_ref=fp1, owner=owner)
+        FakeChildModel.objects.create(test_attr=3, test_ref=fp2, owner=owner)
 
     @staticmethod
     def flush():

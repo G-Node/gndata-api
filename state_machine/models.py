@@ -16,9 +16,6 @@ class ObjectState(BaseVersionedObject):
     - 'guid' - a hash of an object, a unique global object identifier (GUID)
     - 'local_id' - object ID invariant across object versions
     """
-    # local ID, invariant between object versions, distinct between objects
-    # local ID + starts_at basically making a PK
-    local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
     owner = models.ForeignKey(User, editable=False)
 
     class Meta:

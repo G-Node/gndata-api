@@ -9,12 +9,12 @@
             "is_active": true,
             "is_superuser": false,
             "is_staff": false,
-            "last_login": "2010-02-19 19:11:56",
+            "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
             "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
             "email": "bob@thefightclub.com",
-            "date_joined": "2010-02-18 09:10:01"
+            "date_joined": "2014-04-09 09:26:53Z"
         }
     },
     {
@@ -27,12 +27,12 @@
             "is_active": true,
             "is_superuser": true,
             "is_staff": false,
-            "last_login": "2010-02-19 19:11:56",
+            "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
             "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
             "email": "ed@nsa.com",
-            "date_joined": "2010-02-18 09:10:01"
+            "date_joined": "2014-04-09 09:26:53Z"
         }
     },
     {
@@ -45,12 +45,12 @@
             "is_active": true,
             "is_superuser": false,
             "is_staff": false,
-            "last_login": "2010-02-19 19:11:56",
+            "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
             "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
             "email": "neo@matrix.com",
-            "date_joined": "2010-02-18 09:10:01"
+            "date_joined": "2014-04-09 09:26:53Z"
         }
     }
 ]

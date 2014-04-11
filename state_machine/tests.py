@@ -1,8 +1,7 @@
-import datetime, time
+import time
 from django.utils import timezone
 
 from django.test import TestCase
-from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
 
 from state_machine.fake import *
@@ -16,13 +15,13 @@ class TestVersionedQuerySet(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
         for model in fake_models:
             update_keys_for_model(model)
         Assets.fill()
         self.qs = FakeModel.objects
         self.owner = User.objects.get(pk=1)
-        time.sleep(1)
+        time.sleep(1)  # needed to test versioned objects
 
     def test_create(self):
         created = self.qs.create(test_attr=271828, owner=self.owner)
@@ -101,6 +100,8 @@ class TestObjectRelations(TestCase):
     """
     fixtures = ["users.json"]
 
+    # helper methods -----------------------------------------------------------
+
     def assert_fm1_not_changed(self, fm1):
         self.assertTrue(fm1.fakeparentmodel_set.exists())
         self.assertEqual(fm1.fakeparentmodel_set.all()[0].test_attr, 1)
@@ -121,14 +122,17 @@ class TestObjectRelations(TestCase):
     def assert_fc3_not_changed(self, fc3):
         self.assertEqual(fc3.test_ref.test_attr, 2)
 
+    # normal tests -------------------------------------------------------------
+
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
         for model in fake_models:
             update_keys_for_model(model)
 
         Assets.fill()
         self.owner = User.objects.get(pk=1)
         self.origin = timezone.now()
+        time.sleep(1)  # needed to test versioned objects
 
     def test_fk_parent(self):
         self.assertEqual(Assets.fc(1).test_ref.test_attr, 1)
@@ -144,7 +148,7 @@ class TestObjectRelations(TestCase):
 
     def test_m2m_child(self):
         self.assertEqual(Assets.fm(1).fakeparentmodel_set.all()[0].test_attr, 1)
-        self.assertEqual(Assets.fm(2).fakeparentmodel_set.all()[0].test_attr, 2)
+        self.assertEqual(Assets.fm(2).fakeparentmodel_set.all().count(), 2)
         self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
 
     def test_m2m_child_delete(self):
@@ -206,9 +210,10 @@ class TestObjectRelations(TestCase):
 
     def test_all_parent_add(self):
         fp1 = Assets.fp(1)
+        self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
         fp1.m2m.through.objects.create(parent=fp1, fake=Assets.fm(3))
         self.assertEqual(Assets.fp(1).m2m.all().count(), 3)
-        self.assertFalse(Assets.fm(3).fakeparentmodel_set.exists())
+        self.assertTrue(Assets.fm(3).fakeparentmodel_set.exists())
 
         self.assert_fp1_not_changed(Assets.fp(1, self.origin))
         self.assert_fm3_not_changed(Assets.fm(3, self.origin))
@@ -239,7 +244,6 @@ class TestObjectRelations(TestCase):
         fc3.test_ref = None
         fc3.save()
 
-        self.assertEqual(Assets.fc(1).test_ref.test_attr, 2)
         self.assertTrue(Assets.fc(3).test_ref is None)
         self.assertFalse(Assets.fp(2).fakechildmodel_set.exists())
 
@@ -258,14 +262,14 @@ class TestObjectState(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel]
+        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
         for model in fake_models:
             update_keys_for_model(model)
 
         Assets.fill()
         self.origin = timezone.now()
         self.owner = User.objects.get(pk=1)
-        time.sleep(1)
+        time.sleep(1)  # needed to test versioned objects
 
     def test_save_create(self):
         fm = FakeModel(test_attr=271828, owner=self.owner)
