@@ -8,12 +8,6 @@ from gndata_api.fake import *
 from gndata_api.assets import Assets
 
 
-#globals()["FakeModel"] = FakeModel
-#globals()["FakeParentModel"] = FakeParentModel
-#globals()["FakeChildModel"] = FakeChildModel
-#globals()["parent_fake"] = parent_fake
-
-
 class TestVersionedQuerySet(TestCase):
     """
     Base test class for versioned QuerySet testing.
@@ -255,8 +249,7 @@ class TestObjectRelations(TestCase):
 
 class TestObjectState(TestCase):
     """
-    Base test class for VersionedObjectManager testing. The fill_relations
-    method should retrieve and pre-cache objects with all relatives.
+    Base test class for ObjectState testing.
     """
     fixtures = ["users.json"]
 
