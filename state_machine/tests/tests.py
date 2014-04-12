@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from gndata_api.fake import *
-from gndata_api.assets import Assets
+from state_machine.tests.assets import Assets
 
 
 class TestVersionedQuerySet(TestCase):
@@ -247,9 +247,9 @@ class TestObjectRelations(TestCase):
         Assets.flush()
 
 
-class TestObjectState(TestCase):
+class TestVersionedObject(TestCase):
     """
-    Base test class for ObjectState testing.
+    Base test class for TestVersionedObject testing.
     """
     fixtures = ["users.json"]
 

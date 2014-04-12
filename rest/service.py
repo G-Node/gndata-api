@@ -40,7 +40,7 @@ class BaseService(object):
 
         return objects.distinct()[offset: offset + max_results]
 
-    def get(self, pk, user, at_time=None):
+    def get(self, user, pk, at_time=None):
         """
         Get a single object, if accessible for the user.
         Raises ReferenceError if objects do not support access management.
@@ -58,7 +58,7 @@ class BaseService(object):
 
         return obj
 
-    def create(self, obj, user):
+    def create(self, user, obj):
         """
         Creates an object using given object as a template.
         Does not modify the given object.
@@ -70,7 +70,7 @@ class BaseService(object):
         params['owner'] = user
         return self.model.objects.create(**params)
 
-    def update(self, pk, obj, user):
+    def update(self, user, pk, obj):
         """
         Updates an object with primary key PK using given object as a template.
         Validates if a user can modify this object.
@@ -88,7 +88,7 @@ class BaseService(object):
         params = dict([(f.attname, getattr(obj, f.attname)) for f in fields])
         return qs.update(**params)
 
-    def delete(self, pk, user):
+    def delete(self, user, pk):
         """
         Deletes an object with primary key PK.
         Validates if a user can modify this object.

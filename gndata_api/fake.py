@@ -17,6 +17,7 @@ from state_machine.versioning.descriptors import VersionedManyToManyField
 class FakeModel(ObjectState):
     """ simple versioned model """
     test_attr = models.IntegerField()
+    test_str_attr = models.CharField(max_length=50, blank=True)
 
 
 class FakeParentModel(ObjectState):
