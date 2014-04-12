@@ -3,7 +3,18 @@ from django.contrib.auth.models import User
 
 
 class Assets(object):
+    """
+    Creates the following assets.
 
+    FakeChild (FK) FakeParent (M2M) Fake
+    ---------  ->  ----------  <->  ----
+
+       fc1 ----                ---- fm1
+               \              /
+       fc2 --------- fp1 ---------- fm2
+                             /
+       fc3 --------- fp2 ----       fm3
+    """
     @staticmethod
     def _get_fake_object(model, i, at_time=None):
         # always return a fresh object from the DB
