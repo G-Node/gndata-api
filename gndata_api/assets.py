@@ -1,5 +1,6 @@
-from state_machine.fake import FakeModel, FakeParentModel, FakeChildModel
 from django.contrib.auth.models import User
+
+from gndata_api.fake import *
 
 
 class Assets(object):
@@ -14,7 +15,12 @@ class Assets(object):
        fc2 --------- fp1 ---------- fm2
                              /
        fc3 --------- fp2 ----       fm3
+
     """
+    @staticmethod
+    def fake_models():
+        return [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
+
     @staticmethod
     def _get_fake_object(model, i, at_time=None):
         # always return a fresh object from the DB
@@ -35,8 +41,11 @@ class Assets(object):
     def fc(cls, i, at_time=None):
         return cls._get_fake_object(FakeChildModel, i, at_time)
 
-    @staticmethod
-    def fill():
+    @classmethod
+    def fill(cls):
+        for model in cls.fake_models():
+            create_fake_model(model)
+
         owner = User.objects.get(pk=1)
 
         fm1 = FakeModel.objects.create(test_attr=1, owner=owner)
@@ -56,8 +65,7 @@ class Assets(object):
         FakeChildModel.objects.create(test_attr=2, test_ref=fp1, owner=owner)
         FakeChildModel.objects.create(test_attr=3, test_ref=fp2, owner=owner)
 
-    @staticmethod
-    def flush():
-        FakeModel.objects.all().delete()
-        FakeChildModel.objects.all().delete()
-        FakeParentModel.objects.all().delete()
+    @classmethod
+    def flush(cls):
+        for model in cls.fake_models():
+            delete_fake_model(model)

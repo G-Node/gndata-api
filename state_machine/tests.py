@@ -1,11 +1,17 @@
 import time
-from django.utils import timezone
 
+from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from state_machine.fake import *
-from state_machine.assets import Assets
+from gndata_api.fake import *
+from gndata_api.assets import Assets
+
+
+#globals()["FakeModel"] = FakeModel
+#globals()["FakeParentModel"] = FakeParentModel
+#globals()["FakeChildModel"] = FakeChildModel
+#globals()["parent_fake"] = parent_fake
 
 
 class TestVersionedQuerySet(TestCase):
@@ -15,9 +21,6 @@ class TestVersionedQuerySet(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
-        for model in fake_models:
-            update_keys_for_model(model)
         Assets.fill()
         self.qs = FakeModel.objects
         self.owner = User.objects.get(pk=1)
@@ -125,10 +128,6 @@ class TestObjectRelations(TestCase):
     # normal tests -------------------------------------------------------------
 
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
-        for model in fake_models:
-            update_keys_for_model(model)
-
         Assets.fill()
         self.owner = User.objects.get(pk=1)
         self.origin = timezone.now()
@@ -262,10 +261,6 @@ class TestObjectState(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        fake_models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
-        for model in fake_models:
-            update_keys_for_model(model)
-
         Assets.fill()
         self.origin = timezone.now()
         self.owner = User.objects.get(pk=1)
