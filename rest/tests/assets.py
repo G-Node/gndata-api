@@ -12,8 +12,8 @@ class Assets(BaseAssets):
     attr_values = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
 
     def __init__(self):
-        self.models = [FakeModel, FakeParentModel, FakeChildModel,
-                       parent_fake, FakeOwnedModel]
+        pass
+        self.models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake, FakeOwnedModel]
 
     def fill(self):
         super(Assets, self).fill()
@@ -27,8 +27,8 @@ class Assets(BaseAssets):
         for i in range(4):
             owner = bob if i < 3 else ed
             params = {
-                'test_attr': i,
-                'test_str_attr': self.attr_values[i],
+                'test_attr': i + 1,
+                'test_str_attr': self.attr_values[i + 1],
                 'owner': owner
             }
             obj = FakeModel.objects.create(**params)
@@ -36,7 +36,7 @@ class Assets(BaseAssets):
 
         for i in range(2):
             params = {
-                'test_attr': i,
+                'test_attr': i + 1,
                 'owner': bob
             }
             obj = FakeParentModel.objects.create(**params)
@@ -56,7 +56,7 @@ class Assets(BaseAssets):
             test_ref = assets["parent"][0] if i < 2 else assets["parent"][1]
             test_ref = None if owner == ed else test_ref
             params = {
-                'test_attr': i,
+                'test_attr': i + 1,
                 'test_ref': test_ref,
                 'owner': bob if i < 3 else ed
             }
@@ -66,7 +66,7 @@ class Assets(BaseAssets):
         for i in range(4):
             params = {
                 'safety_level': 3 if i < 2 else 1,
-                'test_attr': i,
+                'test_attr': i + 1,
                 'owner': bob
             }
             obj = FakeOwnedModel.objects.create(**params)

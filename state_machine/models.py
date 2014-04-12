@@ -18,6 +18,10 @@ class BaseGnodeObject(BaseVersionedObject):
         """ by default object is accessible for it's owner """
         return self.owner == user
 
+    def is_editable(self, user):
+        """ by default object is editable for it's owner """
+        return self.owner == user
+
 
 class PermissionsBase(models.Model):
     """
@@ -181,9 +185,6 @@ class PermissionsBase(models.Model):
     def is_accessible(self, user):
         """ Defines whether an object (Datafile etc) is accessible for a given
         user (either readable or editable) """
-        return self.is_readable(user) or self.is_editable(user)
-
-    def is_readable(self, user):
         return self.is_editable(user) or self.is_public() or \
                (user in self.access_list()) or self.owner == user
 

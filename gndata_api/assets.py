@@ -1,4 +1,4 @@
-from gndata_api.fake import *
+from gndata_api.fake import create_fake_model, delete_fake_model
 
 
 class BaseAssets(object):

@@ -13,7 +13,7 @@ class BaseService(object):
     def __init__(self, model):
         self.model = model
 
-    def list(self, user, filters=None, excludes=None, max_results=max_results, offset=0):
+    def list(self, user, filters=[], excludes=[], max_results=max_results, offset=0):
         """
         List of objects filtered with filters and negative filters (excludes).
 
@@ -28,6 +28,8 @@ class BaseService(object):
 
         if hasattr(self.model, 'security_filter'):
             objects = self.model.security_filter(objects, user)
+        else:
+            objects = objects.filter(owner=user)
 
         # processing one-by-one, potentially equal keys (m2m, metadata)
         for filt in filters:
@@ -66,7 +68,7 @@ class BaseService(object):
         :returns: created object of type self.model
         """
         fields = [f for f in obj._meta.local_fields if not f.primary_key]
-        params = dict([(f.attname, getattr(obj, f.attname)) for f in fields])
+        params = dict([(f.name, getattr(obj, f.name)) for f in fields])
         params['owner'] = user
         return self.model.objects.create(**params)
 
@@ -82,11 +84,11 @@ class BaseService(object):
         if not hasattr(fresh, 'is_editable') or not fresh.is_editable(user):
             raise ReferenceError('You are not authorized to change this object')
 
-        qs = self.model.filter(pk=pk)
+        qs = self.model.objects.filter(pk=pk)
         test = lambda x: not x.primary_key and x.editable
         fields = [f for f in obj._meta.local_fields if test(f)]
         params = dict([(f.attname, getattr(obj, f.attname)) for f in fields])
-        return qs.update(**params)
+        return qs.update(**params)[0]
 
     def delete(self, user, pk):
         """

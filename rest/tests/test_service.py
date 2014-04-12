@@ -17,7 +17,7 @@ class TestService(TestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
-        self.assets = Assets.fill()
+        self.assets = Assets().fill()
         self.bob = User.objects.get(pk=1)
         self.ed = User.objects.get(pk=2)
         self.srv1 = BaseService(FakeModel)
@@ -53,39 +53,39 @@ class TestService(TestCase):
         selected = self.srv2.list(self.ed, filters=filters)
         self.assertEqual(len(selected), 2)
 
-        filters = [('test_attr__gt', '1'), ('test_str_attr__startswith', 'f')]
+        filters = [('test_attr__gt', '2'), ('test_str_attr__startswith', 't')]
         selected = self.srv1.list(self.bob, filters=filters)
         self.assertEqual(len(selected), 1)
 
     def test_excludes(self):
-        filters = [('test_attr', '2')]
-        selected = self.srv1.list(self.bob, excludes=filters)
-        self.assertEqual(len(selected), 3)
+        excludes = [('test_attr', '2')]
+        selected = self.srv1.list(self.bob, excludes=excludes)
+        self.assertEqual(len(selected), 2)
 
-        filters = [('test_str_attr__icontains', 'three')]
-        selected = self.srv1.list(self.bob, excludes=filters)
-        self.assertEqual(len(selected), 1)
+        excludes = [('test_str_attr__icontains', 'three')]
+        selected = self.srv1.list(self.bob, excludes=excludes)
+        self.assertEqual(len(selected), 2)
 
         # test public objects with foreign owner
-        filters = [('owner__last_name__icontains', 'bolson')]
-        selected = self.srv2.list(self.ed, excludes=filters)
+        excludes = [('owner__last_name__icontains', 'bolson')]
+        selected = self.srv2.list(self.ed, excludes=excludes)
         self.assertEqual(len(selected), 0)
 
-        filters = [('test_attr__gt', '1'), ('test_str_attr__startswith', 'f')]
-        selected = self.srv1.list(self.bob, excludes=filters)
-        self.assertEqual(len(selected), 2)
+        excludes = [('test_attr__gt', '2'), ('test_str_attr__startswith', 't')]
+        selected = self.srv1.list(self.bob, excludes=excludes)
+        self.assertEqual(len(selected), 1)
 
     def test_get(self):
         fm = self.assets["fake"][0]
 
-        self.assertRaises(self.srv1.get(self.ed, 12345678), ObjectDoesNotExist)
+        self.assertRaises(ObjectDoesNotExist, self.srv1.get, self.ed, 12345678)
 
         # authorized
         selected = self.srv1.get(self.bob, fm.pk)
         self.assertEqual(selected.test_attr, fm.test_attr)
 
         # non-authorized
-        self.assertRaises(self.srv1.get(self.ed, fm.pk), ReferenceError)
+        self.assertRaises(ReferenceError, self.srv1.get, self.ed, fm.pk)
 
         time.sleep(1)
 
@@ -117,21 +117,21 @@ class TestService(TestCase):
         self.assertEqual(fresh.test_attr, obj.test_attr)
 
         # non-authorized
-        self.assertRaises(self.srv1.update(self.bob, fm.pk, fm), ReferenceError)
+        self.assertRaises(ReferenceError, self.srv1.update, self.ed, fm.pk, fm)
 
     def test_delete(self):
         count = FakeModel.objects.all().count()
         fm = self.assets["fake"][0]
 
         # non-authorized
-        self.assertRaises(self.srv1.delete(self.bob, fm.pk), ReferenceError)
+        self.assertRaises(ReferenceError, self.srv1.delete, self.ed, fm.pk)
 
         # authorized
         self.srv1.delete(self.bob, fm.pk)
 
-        self.assertRaises(FakeModel.objects.all().get(pk=fm.pk), ObjectDoesNotExist)
+        self.assertRaises(ObjectDoesNotExist, FakeModel.objects.all().get, pk=fm.pk)
         self.assertEqual(FakeModel.objects.all().count(), count - 1)
 
     def tearDown(self):
-        Assets.flush()
+        Assets().flush()
 
