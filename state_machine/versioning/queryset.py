@@ -77,7 +77,7 @@ class VersionedQuerySet(QuerySet):
             if vmodel_map.has_key(real_name):
                 superclasses = vmodel_map[real_name].mro()
                 cls_names = [x.__name__ for x in superclasses]
-                if not ('ObjectState' in cls_names or 'VersionedM2M' in cls_names):
+                if not ('BaseGnodeObject' in cls_names or 'VersionedM2M' in cls_names):
                     continue
 
             cloned_node = qry.where.__deepcopy__(memodict=None)

@@ -2,7 +2,7 @@ from django.db import models
 from django.db import connection
 from django.core.management.color import no_style
 
-from state_machine.models import ObjectState
+from state_machine.models import BaseGnodeObject, PermissionsBase
 from state_machine.versioning.models import VersionedM2M
 from state_machine.versioning.descriptors import VersionedForeignKey
 from state_machine.versioning.descriptors import VersionedManyToManyField
@@ -14,13 +14,13 @@ from state_machine.versioning.descriptors import VersionedManyToManyField
 #===============================================================================
 
 
-class FakeModel(ObjectState):
+class FakeModel(BaseGnodeObject):
     """ simple versioned model """
     test_attr = models.IntegerField()
     test_str_attr = models.CharField(max_length=50, blank=True)
 
 
-class FakeParentModel(ObjectState):
+class FakeParentModel(BaseGnodeObject):
     """ versioned model with M2M relationship and reverse FK relationship """
     test_attr = models.IntegerField()
     m2m = VersionedManyToManyField(
@@ -28,7 +28,7 @@ class FakeParentModel(ObjectState):
     )
 
 
-class FakeChildModel(ObjectState):
+class FakeChildModel(BaseGnodeObject):
     """ simple versioned model with parent """
     test_attr = models.IntegerField()
     test_ref = VersionedForeignKey(
@@ -40,6 +40,11 @@ class parent_fake(VersionedM2M):
     """ M2M relationship class """
     parent = VersionedForeignKey(FakeParentModel)
     fake = VersionedForeignKey(FakeModel)
+
+
+class FakeOwnedModel(BaseGnodeObject, PermissionsBase):
+    """ simple versioned model with permissions """
+    test_attr = models.IntegerField()
 
 
 #===============================================================================
@@ -56,7 +61,7 @@ def create_fake_model(prototype):
     for statement in sql:
         _cursor.execute(statement)
     # versioned objects require PRIMARY KEY change
-    if issubclass(prototype, ObjectState):
+    if issubclass(prototype, BaseGnodeObject):
         update_keys_for_model(prototype)
 
 

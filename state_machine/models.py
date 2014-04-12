@@ -5,55 +5,21 @@ from state_machine.versioning.models import BaseVersionedObject
 from gndata_api.utils import *
 
 
-class ObjectState(BaseVersionedObject):
+class BaseGnodeObject(BaseVersionedObject):
     """
     A base class for a versioned G-Node object.
-
-    Versioning is implemented as "full copy" mode. For every change, a new 
-    revision is created and a new version of the object is created.
-
-    There are two types of object IDs:
-    - 'guid' - a hash of an object, a unique global object identifier (GUID)
-    - 'local_id' - object ID invariant across object versions
     """
     owner = models.ForeignKey(User, editable=False)
 
     class Meta:
         abstract = True
 
-    @property
-    def local_id_as_str(self):
-        """ base32hex string representation of an ID """
-        return base32str(self.local_id)
-
-    @property
-    def get_type(self):
-        """ every object has a type defined as lowercase name of the class. """
-        return self.__class__.__name__.lower()
-
-    def natural_key(self):
-        return {
-            "local_id": self.local_id,
-            "last_modified": self.starts_at,
-            "guid": self.guid }
-
-    def get_absolute_url(self):
-        """ by default this should be similar to that """
-        return ''.join(['/', get_type(self), '/', self.local_id_as_str, '/'])
-
-    def get_owner(self):
-        """ required for filtering by owner in REST """
-        return self.owner
-
-    def is_active(self):
-        return not self.ends_at
-
     def is_accessible(self, user):
         """ by default object is accessible for it's owner """
         return self.owner == user
 
 
-class SafetyLevel(models.Model):
+class PermissionsBase(models.Model):
     """
     Safety level represents a level of access to an object by other users. An 
     object can be Public (all users have access), Friendly (all "friends" have 
@@ -129,7 +95,7 @@ class SafetyLevel(models.Model):
         if cascade:
             for related in self._meta.get_all_related_objects():
                 # validate if reversed child can be shared
-                if issubclass(related.model, SafetyLevel):
+                if issubclass(related.model, PermissionsBase):
                     for obj in getattr(self, related.get_accessor_name()).all():
                         obj.acl_update(safety_level, users, cascade)
 
@@ -278,7 +244,7 @@ class ObjectExtender(object):
         ids = [ x.pk for x in objects ]
 
         # check if the model is multi-user
-        if hasattr(self.model, 'acl_type') and issubclass(self.model, ObjectState) and user:
+        if hasattr(self.model, 'acl_type') and issubclass(self.model, BaseGnodeObject) and user:
             # fetch single accesses for all objects
             accs = SingleAccess.objects.filter(object_id__in=ids,
                                                object_type=self.model.acl_type())

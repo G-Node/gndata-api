@@ -38,12 +38,12 @@ DB table, so all versions of the same object have the same 'local_id' value.
 This PK is needed for django to auto-build relationships via FKs and M2Ms.
 However, to get the correct database behaviour after the initial table creation
 the custom SQL changes this PK to the real globally unique PK field called
-'guid' - every versioned model has it (see 'ObjectState' class).
+'guid' - every versioned model has it (see 'BaseGnodeObject' class).
 
 
 3. Base class supporting versioning for other apps
 --------------------------------------------------------------------------------
-All versioned models should inherit from 'ObjectState'. In this base class all
+All versioned models should inherit from 'BaseGnodeObject'. In this base class all
 features of the versioned object are implemented.
 
 
@@ -81,7 +81,7 @@ time, equal to the time of the original object, when appropriate parent object
 is called.
 
 b) Foreign Related and all M2M Objects:
-all '<object_type>_set' attributes are wrapped in the base class (ObjectState)
+all '<object_type>_set' attributes are wrapped in the base class (BaseGnodeObject)
 in __getattribute__ by assigning the time to the RelatedManager, returned by
 default by the '<object_type>_set' descriptor. Thus the RelatedManager knows
 about timing to request related objects from the database, equal to the time of

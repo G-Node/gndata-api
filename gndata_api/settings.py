@@ -98,3 +98,7 @@ STATICFILES_DIRS = (
 TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
 )
+
+REST_CONFIG = {
+    'max_results': 100
+}

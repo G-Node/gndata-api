@@ -5,6 +5,8 @@ from state_machine.versioning.managers import VersionManager
 from state_machine.versioning.managers import VersionedObjectManager
 from state_machine.versioning.managers import VersionedM2MManager
 
+from gndata_api.utils import base32str
+
 #===============================================================================
 # Base models for a simple Versioned Object, M2M relations
 #===============================================================================
@@ -12,8 +14,14 @@ from state_machine.versioning.managers import VersionedM2MManager
 
 class BaseVersionedObject(models.Model):
     """
-    this is an abstract class that has basic fields needed for versioning and
-    implements key versioned operations like save or delete.
+    A base class for a versioned G-Node object.
+
+    Versioning is implemented as "full copy" mode. For every change, a new
+    revision is created and a new version of the object is created.
+
+    There are two types of object IDs:
+    - 'guid' - a hash of an object, a unique global object identifier (GUID)
+    - 'local_id' - object ID invariant across object versions
     """
     # global ID, distinct for every object version = unique table PK
     # PRIMARY KEY must be swapped with local_id on the database
@@ -57,6 +65,30 @@ class BaseVersionedObject(models.Model):
         """ implements versioning by always saving new object. This should be
         already an atomic operation """
         self.__class__.objects.bulk_create([self])
+
+    @property
+    def local_id_as_str(self):
+        """ base32hex string representation of an ID """
+        return base32str(self.local_id)
+
+    @property
+    def get_type(self):
+        """ every object has a type defined as lowercase name of the class. """
+        return self.__class__.__name__.lower()
+
+    def natural_key(self):
+        return {
+            "local_id": self.local_id,
+            "last_modified": self.starts_at,
+            "guid": self.guid
+        }
+
+    def get_absolute_url(self):
+        """ by default this should be similar to that """
+        return ''.join(['/', get_type(self), '/', self.local_id_as_str, '/'])
+
+    def is_active(self):
+        return not self.ends_at
 
 
 class VersionedM2M(BaseVersionedObject):

@@ -18,21 +18,23 @@ class Assets(BaseAssets):
        fc3 --------- fp2 ----       fm3
 
     """
+    def __init__(self):
+        self.models = [FakeModel, FakeParentModel, FakeChildModel, parent_fake]
+
     @classmethod
     def fm(cls, i, at_time=None):
-        return cls._get_fake_object(FakeModel, i, at_time)
+        return cls.get_fake_object(FakeModel, i, at_time)
 
     @classmethod
     def fp(cls, i, at_time=None):
-        return cls._get_fake_object(FakeParentModel, i, at_time)
+        return cls.get_fake_object(FakeParentModel, i, at_time)
 
     @classmethod
     def fc(cls, i, at_time=None):
-        return cls._get_fake_object(FakeChildModel, i, at_time)
+        return cls.get_fake_object(FakeChildModel, i, at_time)
 
-    @classmethod
-    def fill(cls):
-        super(Assets, cls).fill()
+    def fill(self):
+        super(Assets, self).fill()
 
         owner = User.objects.get(pk=1)
 

@@ -11,24 +11,15 @@ class Assets(BaseAssets):
     objects = {}
     attr_values = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
 
-    @classmethod
-    def fm(cls, i, at_time=None):
-        return cls._get_fake_object(FakeModel, i, at_time)
+    def __init__(self):
+        self.models = [FakeModel, FakeParentModel, FakeChildModel,
+                       parent_fake, FakeOwnedModel]
 
-    @classmethod
-    def fp(cls, i, at_time=None):
-        return cls._get_fake_object(FakeParentModel, i, at_time)
-
-    @classmethod
-    def fc(cls, i, at_time=None):
-        return cls._get_fake_object(FakeChildModel, i, at_time)
-
-    @classmethod
-    def fill(cls):
-        super(Assets, cls).fill()
+    def fill(self):
+        super(Assets, self).fill()
 
         # collector for created objects
-        assets = {"fake": [], "parent": [], "child": []}
+        assets = {"fake": [], "parent": [], "child": [], "owned": []}
 
         bob = User.objects.get(pk=1)
         ed = User.objects.get(pk=2)
@@ -37,7 +28,7 @@ class Assets(BaseAssets):
             owner = bob if i < 3 else ed
             params = {
                 'test_attr': i,
-                'test_str_attr': cls.attr_values[i],
+                'test_str_attr': self.attr_values[i],
                 'owner': owner
             }
             obj = FakeModel.objects.create(**params)
@@ -71,5 +62,14 @@ class Assets(BaseAssets):
             }
             obj = FakeChildModel.objects.create(**params)
             assets["child"].append(obj)
+
+        for i in range(4):
+            params = {
+                'safety_level': 3 if i < 2 else 1,
+                'test_attr': i,
+                'owner': bob
+            }
+            obj = FakeOwnedModel.objects.create(**params)
+            assets["owned"].append(obj)
 
         return assets

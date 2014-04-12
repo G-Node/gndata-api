@@ -8,7 +8,7 @@ class BaseService(object):
     An abstract class that implements basic Service functions like get single
     object, get list of objects, create, update and delete objects.
 
-    Assumes a model subclasses an ObjectState.
+    Assumes a model subclasses an BaseGnodeObject.
     """
     def __init__(self, model):
         self.model = model
