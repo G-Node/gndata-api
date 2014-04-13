@@ -1,4 +1,4 @@
-from tastypie.resources import ModelResource
+from tastypie.resources import ModelResource, ALL
 from tastypie import fields
 from metadata.models import Reporter, Article
 
@@ -8,7 +8,9 @@ class ReporterResource(ModelResource):
         queryset = Reporter.objects.all()
         resource_name = 'reporter'
         excludes = ['starts_at', 'ends_at']
-
+        filtering = {
+            'first_name': ALL
+        }
 
 class ArticleResource(ModelResource):
     reporter = fields.ForeignKey(ReporterResource, 'reporter')
