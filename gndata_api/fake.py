@@ -1,6 +1,7 @@
 from django.db import models
 from django.db import connection
 from django.core.management.color import no_style
+from gndata_api import settings
 
 from state_machine.models import BaseGnodeObject, PermissionsBase
 from state_machine.versioning.models import VersionedM2M
@@ -70,8 +71,19 @@ def update_keys_for_model(model):
     the PK should be changed from 'local_id' to the 'guid' """
     sql = []
     db_table = model._meta.db_table
-    sql.append(''.join(["ALTER TABLE `", db_table, "` DROP PRIMARY KEY;"]))
-    sql.append(''.join(["ALTER TABLE `", db_table, "` ADD PRIMARY KEY (`guid`);"]))
+    engine = settings.DATABASES['default']['ENGINE']
+
+    if engine == 'django.db.backends.postgresql_psycopg2':
+        sql.append(''.join(["ALTER TABLE ", db_table, " DROP CONSTRAINT ", db_table, "_pkey"]))
+        sql.append(''.join(["ALTER TABLE ", db_table, " ADD PRIMARY KEY (guid)"]))
+
+    elif engine == 'django.db.backends.mysql':
+        sql.append(''.join(["ALTER TABLE `", db_table, "` DROP PRIMARY KEY;"]))
+        sql.append(''.join(["ALTER TABLE `", db_table, "` ADD PRIMARY KEY (`guid`);"]))
+
+    else:
+        raise TypeError('The current database engine is not supported.')
+
     _cursor = connection.cursor()
     for statement in sql:
         _cursor.execute(statement)

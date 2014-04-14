@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
-from rest.service import BaseService
+from rest._service import BaseService
 from gndata_api.fake import *
 from rest.tests.assets import Assets
 

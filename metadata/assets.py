@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from gndata_api.assets import BaseAssets
 from metadata.models import Reporter, Article
 
+
 class Assets(BaseAssets):
     """
     Creates test assets.
