@@ -61,6 +61,15 @@ WSGI_APPLICATION = 'gndata_api.wsgi.application'
 
 DATABASES = {
     'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'gndata_api',
+        'USER': 'gndata',
+        'PASSWORD': 'pass',
+        'HOST': 'localhost',
+        'PORT': '5432'
+
+    },
+    'mysql': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'gndata-api',
         'PASSWORD': 'pass',
@@ -68,7 +77,7 @@ DATABASES = {
         'HOST': '',
         'PORT': ''
     },
-    'mysql': {
+    'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }

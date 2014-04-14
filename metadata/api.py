@@ -1,5 +1,8 @@
 from tastypie.resources import ModelResource, ALL
 from tastypie import fields
+from tastypie.authentication import SessionAuthentication
+
+from rest.authorization import BaseAuthorization
 from metadata.models import Reporter, Article
 
 
@@ -11,6 +14,9 @@ class ReporterResource(ModelResource):
         filtering = {
             'first_name': ALL
         }
+        authentication = SessionAuthentication()
+        authorization = BaseAuthorization()
+
 
 class ArticleResource(ModelResource):
     reporter = fields.ForeignKey(ReporterResource, 'reporter')
@@ -18,3 +24,5 @@ class ArticleResource(ModelResource):
     class Meta:
         queryset = Article.objects.all()
         resource_name = 'article'
+        authentication = SessionAuthentication()
+        authorization = BaseAuthorization()

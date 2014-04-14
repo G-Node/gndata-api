@@ -5,6 +5,8 @@ max_results = settings.REST_CONFIG['max_results']
 
 class BaseService(object):
     """
+    --- A PROTOTYPE FOR THE SERVICE LAYER ---
+
     An abstract class that implements basic Service functions like get single
     object, get list of objects, create, update and delete objects.
 
