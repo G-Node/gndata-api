@@ -54,10 +54,12 @@ class Assets(BaseAssets):
 
         # sections second level
         for i in range(5):
+            sec = assets["section"][0] if i < 2 else assets["section"][1]
             params = {
                 'name': "%d-th section" % i,
                 'type': "level #2",
-                'section': assets["section"][0] if i < 2 else assets["section"][1],
+                'section': sec,
+                'document': sec.document,
                 'owner': bob
             }
             obj = Section.objects.create(**params)

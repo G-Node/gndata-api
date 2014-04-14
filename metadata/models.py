@@ -4,7 +4,7 @@ from state_machine.models import BaseGnodeObject, PermissionsBase
 from state_machine.versioning.descriptors import VersionedForeignKey
 
 
-class Document(BaseGnodeObject):
+class Document(BaseGnodeObject, PermissionsBase):
     """
     Class represents a metadata "Document".
     """
@@ -84,6 +84,35 @@ class Section(BaseGnodeObject):
         if self.sections:
             return int(self.sections[0].tree_position) + 1
         return 1
+
+    def save(self, *args, **kwargs):
+        def obj_has_changed(old, new):
+            return (old is None and new is not None) or \
+                   (new is None and old is not None) or \
+                   (old is not None and new is not None and not old.pk == new.pk)
+
+        # TODO implement the same logic in QuerySet for safety
+
+        if self.pk is not None:  # update case
+            old = self.__class__.objects.get(pk=self.pk)
+            if obj_has_changed(old.document, self.document):
+                if obj_has_changed(old.section, self.section):
+                    self.section = old.section
+
+                if not old.section is None:
+                    raise ValueError("Clean parent section to change Document")
+
+        else:  # create case
+            if self.document is None and self.section is None:
+                raise ValueError("Either Document or Section should be set")
+
+            # section has a priority. if section is set, the document of the new
+            # section will be taken from the parent section, not from the
+            # current 'document' attribute
+            if self.section is not None:
+                self.document = self.section.document
+
+        super(Section, self).save(*args, **kwargs)
 
 
 class Property(BaseGnodeObject):

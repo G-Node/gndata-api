@@ -64,6 +64,7 @@ class BaseVersionedObject(models.Model):
     def save(self, *args, **kwargs):
         """ implements versioning by always saving new object. This should be
         already an atomic operation """
+        # update if self exists in the DB else create?
         self.__class__.objects.bulk_create([self])
 
     @property
