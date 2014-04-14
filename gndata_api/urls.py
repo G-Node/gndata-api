@@ -4,11 +4,13 @@ from django.contrib import admin
 admin.autodiscover()
 
 from tastypie.api import Api
-from metadata.api import ReporterResource, ArticleResource
+from metadata.api import *
 
 v1_api = Api(api_name='v1')
-v1_api.register(ArticleResource())
-v1_api.register(ReporterResource())
+v1_api.register(DocumentResource())
+v1_api.register(SectionResource())
+v1_api.register(PropertyResource())
+v1_api.register(ValueResource())
 
 
 urlpatterns = patterns('',
