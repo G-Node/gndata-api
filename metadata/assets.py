@@ -1,41 +1,67 @@
 from django.contrib.auth.models import User
-from gndata_api.assets import BaseAssets
-from metadata.models import Reporter, Article
+from gndata_api.baseassets import BaseAssets
+from metadata.models import *
+
+import random
 
 
 class Assets(BaseAssets):
     """
     Creates test assets.
     """
-    objects = {}
-    attr_values = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
 
     def __init__(self):
-        self.models = [Reporter, Article]
+        self.models = [Document, Section, Property, Value]
 
     def fill(self):
+        def assign_dummy_properties(section):
+            r = random.randint(1, 9)
+            p = Property.objects.create(name="prop %d" % r, section=section)
+            v = Value.objects.create(type="value %d" % r, property=p)
+            assets["property"].append(p)
+            assets["value"].append(v)
+
         # collector for created objects
-        assets = {"reporter": [], "article": []}
+        assets = {"document": [], "section": [], "property": [], "value": []}
 
         bob = User.objects.get(pk=1)
         ed = User.objects.get(pk=2)
 
-        for i in range(4):
+        # documents
+        url = "http://portal.g-node.org/odml/terminologies/v1.0/" \
+              + "terminologies.xml"
+        for i in range(3):
             params = {
-                'first_name': "mister %d" % i,
-                'last_name': 'from village %d' % (i + 5),
-                'email': '%d_email@example.com' % i,
-                'owner': bob if i < 3 else ed
+                'author': "mister %d" % i,
+                'date': timezone.now(),
+                'version': 1.0,
+                'repository': url,
+                'owner': bob if i < 2 else ed
             }
-            assets['reporter'].append(Reporter.objects.create(**params))
+            assets['document'].append(Document.objects.create(**params))
 
+        # sections first level
         for i in range(4):
             params = {
-                'headline': "%d-th article" % i,
-                'reporter': assets["reporter"][0] if i < 2 else assets["reporter"][1],
+                'name': "%d-th section" % i,
+                'type': "level #1",
+                'document': assets["document"][0] if i < 2 else assets["document"][3],
+                'owner': bob if i < 2 else ed
+            }
+            obj = Section.objects.create(**params)
+            assign_dummy_properties(obj)
+            assets["section"].append(obj)
+
+        # sections second level
+        for i in range(5):
+            params = {
+                'name': "%d-th section" % i,
+                'type': "level #2",
+                'section': assets["section"][0] if i < 2 else assets["section"][1],
                 'owner': bob
             }
-            obj = Article.objects.create(**params)
-            assets["article"].append(obj)
+            obj = Section.objects.create(**params)
+            assign_dummy_properties(obj)
+            assets["section"].append(obj)
 
         return assets
