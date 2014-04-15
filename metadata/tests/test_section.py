@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
 from metadata.models import *
 from metadata.tests.assets import Assets
@@ -67,7 +67,7 @@ class TestSection(TestCase):
         self.assertEqual(new.document.pk, self.assets['section'][1].document.pk)
 
     def test_update_new_document(self):
-        """ only document have changed """
+        """ only document has changed """
         pk = self.assets['section'][4].pk
         qs = Section.objects.filter(pk=pk)
         params = {'document': self.assets['document'][1]}
@@ -79,3 +79,11 @@ class TestSection(TestCase):
 
         new = Section.objects.get(pk=pk)
         self.assertEqual(new.document.pk, self.assets['document'][1].pk)
+
+    def test_delete_cascade(self):
+        pk1 = self.assets['section'][0].pk
+        pk2 = self.assets['section'][4].pk
+
+        Section.objects.get(pk=pk1).delete()
+
+        self.assertRaises(ObjectDoesNotExist, Section.objects.all().get, pk=pk2)

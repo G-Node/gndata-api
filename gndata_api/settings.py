@@ -62,7 +62,7 @@ WSGI_APPLICATION = 'gndata_api.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'gndata_api',
+        'NAME': 'gndata',
         'USER': 'gndata',
         'PASSWORD': 'pass',
         'HOST': 'localhost',

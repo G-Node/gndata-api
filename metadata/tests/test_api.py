@@ -117,9 +117,6 @@ class TestApi(TestCase):
     def test_delete(self):
         pass
 
-    def test_delete_cascade(self):
-        pass
-
     def login(self, user):
         logged = self.client.login(username=user.username, password="pass")
         self.assertTrue(logged)
