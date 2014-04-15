@@ -7,10 +7,14 @@ import random
 
 class Assets(BaseAssets):
     """
-    Creates test assets.
+    Creates test Documents and Sections. All sections have a random property
+    with a random value.
 
-
-
+                doc1 (bob)          doc2 (bob)       doc2 (ed)
+                /        \                           /       \
+            sec1         sec2                     sec3       sec4
+           /   \      /   \   \
+        sec5  sec6  sec7 sec8 sec9
     """
 
     def __init__(self):

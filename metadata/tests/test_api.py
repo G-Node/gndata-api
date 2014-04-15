@@ -16,6 +16,9 @@ class TestApi(TestCase):
     """
     Base test class for Resource API testing.
     """
+
+    # TODO make this test user-invariant
+
     fixtures = ["users.json"]
 
     def setUp(self):
@@ -24,7 +27,7 @@ class TestApi(TestCase):
         self.ed = User.objects.get(pk=2)
         self.api_version = 'v1'
         self.resources = [
-            DocumentResource, SectionResource, PropertyResource, ValueResource
+            ValueResource, PropertyResource, SectionResource, DocumentResource
         ]
         for resource in self.resources:
             update_keys_for_model(resource.Meta.object_class)
@@ -57,8 +60,22 @@ class TestApi(TestCase):
                 validate_obj_count(url, user, count)
 
     def test_get(self):
-        # also test back in time
-        pass
+        # TODO also test back in time
+        for resource in self.resources:
+            obj = self.get_available_objs(resource, self.bob)[0]
+            name = resource.Meta.resource_name
+            url = "/api/%s/%s/%d/?format=json" % (self.api_version, name, obj.local_id)
+
+            self.login(self.ed)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 401, response.content)
+
+            self.logout()
+            self.login(self.bob)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, response.content)
 
     def test_create(self):
         # generic test for a resource. assumes a copy of a random existing
@@ -97,7 +114,7 @@ class TestApi(TestCase):
             res.full_dehydrate(bundle)  # some magic here
             res.full_dehydrate(bundle)  # no clue why this is needed twice..
 
-            bundle.obj.local_id = None  # clean this up
+            bundle.obj.local_id = None  # clean ids
             bundle.data.pop('local_id')
 
             post = Serializer().to_json(bundle)
@@ -115,7 +132,21 @@ class TestApi(TestCase):
             self.assertEqual(response.status_code, 401, response.content)
 
     def test_delete(self):
-        pass
+        for resource in self.resources:
+            obj = self.get_available_objs(resource, self.bob)[0]
+            name = resource.Meta.resource_name
+            url = "/api/%s/%s/%d/" % (self.api_version, name, obj.local_id)
+
+            self.login(self.ed)
+
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 401, response.content)
+
+            self.logout()
+            self.login(self.bob)
+
+            response = self.client.delete(url)
+            self.assertEqual(response.status_code, 204, response.content)
 
     def login(self, user):
         logged = self.client.login(username=user.username, password="pass")
