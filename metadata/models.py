@@ -3,6 +3,8 @@ from django.utils import timezone
 from state_machine.models import BaseGnodeObject, PermissionsBase
 from state_machine.versioning.descriptors import VersionedForeignKey
 
+from metadata.queryset import SectionManager
+
 
 class Document(BaseGnodeObject, PermissionsBase):
     """
@@ -20,29 +22,41 @@ class Section(BaseGnodeObject):
     """
     Class represents a metadata "Section". Used to organize metadata
     (properties - values), Datafiles and NEO Blocks in a tree-like structure.
-    May be recursively linked to itself. May be made public or shared with
-    specific users.
+    May be recursively linked to itself.
+
+    May be made public or shared with specific users via sharing of the related
+    Document.
+
+    Document field is always set, even for low-level Sections in the odML
+    hierarchy. This is done to avoid recursive SQL-calls to fetch appropriate
+    Section permissions.
     """
 
     # odML fields
     name = models.CharField(max_length=100, blank=True, null=True)
-    type = models.CharField(max_length=50, blank=True, null=True)
+    type = models.CharField(max_length=50)
     reference = models.CharField(max_length=100, blank=True, null=True)
     definition = models.CharField(max_length=100, blank=True, null=True)
     link = models.CharField(max_length=100, blank=True, null=True)
     include = models.CharField(max_length=100, blank=True, null=True)
     repository = models.CharField(max_length=100, blank=True, null=True)
     mapping = models.CharField(max_length=100, blank=True, null=True)
-    section = VersionedForeignKey('self', blank=True, null=True, related_name='parent_section')
-    document = VersionedForeignKey(Document, blank=True, null=True)
+    section = VersionedForeignKey(
+        'self', blank=True, null=True, related_name='parent_section',
+        on_delete=models.CASCADE
+    )
+    document = VersionedForeignKey(Document, on_delete=models.CASCADE)
 
     # position in the list on the same level in the tree
     tree_position = models.IntegerField(default=0)
     # field indicates whether it is a "template" section
     is_template = models.BooleanField(default=False)
 
+    # manager that proxies correct QuerySet
+    objects = SectionManager()
+
     def __unicode__(self):
-        return self.name
+        return self.type
 
     @models.permalink
     def get_absolute_url(self):
@@ -91,27 +105,25 @@ class Section(BaseGnodeObject):
                    (new is None and old is not None) or \
                    (old is not None and new is not None and not old.pk == new.pk)
 
-        # TODO implement the same logic in QuerySet for safety
-
         if self.pk is not None:  # update case
             old = self.__class__.objects.get(pk=self.pk)
-            if obj_has_changed(old.document, self.document):
-                if obj_has_changed(old.section, self.section):
-                    self.section = old.section
 
+            if obj_has_changed(old.section, self.section):
+                if not self.section is None:
+                    self.document = self.section.document
+
+            elif obj_has_changed(old.document, self.document):
                 if not old.section is None:
                     raise ValueError("Clean parent section to change Document")
 
         else:  # create case
-            if self.document is None and self.section is None:
-                raise ValueError("Either Document or Section should be set")
-
             # section has a priority. if section is set, the document of the new
             # section will be taken from the parent section, not from the
             # current 'document' attribute
             if self.section is not None:
                 self.document = self.section.document
 
+        self.full_clean()
         super(Section, self).save(*args, **kwargs)
 
 
@@ -127,7 +139,7 @@ class Property(BaseGnodeObject):
     mapping = models.CharField(max_length=100, blank=True, null=True)
     dependency = models.CharField(max_length=100, blank=True, null=True)
     dependencyvalue = models.CharField(max_length=100, blank=True, null=True)
-    section = VersionedForeignKey(Section)
+    section = VersionedForeignKey(Section, on_delete=models.CASCADE)
 
     def __unicode__(self):
         return self.name
@@ -149,7 +161,7 @@ class Value(BaseGnodeObject):
     filename = models.CharField(max_length=100, blank=True, null=True)
     encoder = models.CharField(max_length=100, blank=True, null=True)
     checksum = models.CharField(max_length=100, blank=True, null=True)
-    property = VersionedForeignKey(Property)
+    property = VersionedForeignKey(Property, on_delete=models.CASCADE)
 
     def __unicode__(self):
         return self.type

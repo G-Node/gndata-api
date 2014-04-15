@@ -67,7 +67,6 @@ DATABASES = {
         'PASSWORD': 'pass',
         'HOST': 'localhost',
         'PORT': '5432'
-
     }
 }
 
@@ -117,3 +116,5 @@ TEMPLATE_DIRS = (
 REST_CONFIG = {
     'max_results': 100
 }
+
+TASTYPIE_FULL_DEBUG = True

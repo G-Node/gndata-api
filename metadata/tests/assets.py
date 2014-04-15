@@ -8,6 +8,9 @@ import random
 class Assets(BaseAssets):
     """
     Creates test assets.
+
+
+
     """
 
     def __init__(self):
@@ -16,8 +19,12 @@ class Assets(BaseAssets):
     def fill(self):
         def assign_dummy_properties(section):
             r = random.randint(1, 9)
-            p = Property.objects.create(name="prop %d" % r, section=section)
-            v = Value.objects.create(type="value %d" % r, property=p)
+            p = Property.objects.create(
+                name="prop %d" % r, section=section, owner=section.owner
+            )
+            v = Value.objects.create(
+                type="value %d" % r, property=p, owner=section.owner
+            )
             assets["property"].append(p)
             assets["value"].append(v)
 
@@ -45,7 +52,7 @@ class Assets(BaseAssets):
             params = {
                 'name': "%d-th section" % i,
                 'type': "level #1",
-                'document': assets["document"][0] if i < 2 else assets["document"][3],
+                'document': assets["document"][0] if i < 2 else assets["document"][2],
                 'owner': bob if i < 2 else ed
             }
             obj = Section.objects.create(**params)
@@ -59,7 +66,6 @@ class Assets(BaseAssets):
                 'name': "%d-th section" % i,
                 'type': "level #2",
                 'section': sec,
-                'document': sec.document,
                 'owner': bob
             }
             obj = Section.objects.create(**params)

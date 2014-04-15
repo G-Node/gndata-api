@@ -177,11 +177,15 @@ class VersionedQuerySet(QuerySet):
         assert self.query.can_filter(), \
             "Cannot update a query once a slice has been taken."
 
+        test = lambda x: (not x.primary_key) and x.editable
+        allowed = [f.name for f in self.model._meta.local_fields if test(f)]
+
         if kwargs:
             objs = self._clone()
             for obj in objs:
                 for name, value in kwargs.items():
-                    setattr(obj, name, value)
+                    if name in allowed:
+                        setattr(obj, name, value)
             return self.bulk_create(objs)
         return self
 

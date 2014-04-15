@@ -27,7 +27,7 @@ class DocumentResource(ModelResource):
 
 class SectionResource(ModelResource):
     document = fields.ForeignKey(DocumentResource, 'document')
-    section = fields.ToManyField('self', 'section')
+    section = fields.ToOneField('self', 'section', blank=True, null=True)
     owner = fields.ForeignKey(UserResource, 'owner')
 
     class Meta:
@@ -72,7 +72,7 @@ class PropertyResource(ModelResource):
 
 
 class ValueResource(ModelResource):
-    property = fields.ForeignKey(SectionResource, 'property')
+    property = fields.ForeignKey(PropertyResource, 'property')
     owner = fields.ForeignKey(UserResource, 'owner')
 
     class Meta:
