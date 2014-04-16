@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="jumbotron">
+        <h1>{{ obj }}</h1>
+        <p>
+            This {{ resource_type }} was created by <b>{{ obj.owner.username }}</b>
+            on <b>{{ obj.date_created }}</b>
+        </p>
+        <p>
+            Its unique ID is <b>{{ obj.local_id_as_str }}</b>.
+        </p>
+
+        <ul class="list-group">
+        {% for key, value in obj_as_json.items %}
+            <li class="list-group-item"><span class="badge">{{ key }}</span>{{ value }}</li>
+        {% endfor %}
+        </ul>
+        <p><a class="btn btn-primary btn-lg" role="button">Push me for free</a></p>
+    </div>
+
+{% endblock %}

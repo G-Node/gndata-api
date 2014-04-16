@@ -17,6 +17,10 @@ class Document(BaseGnodeObject, PermissionsBase):
     version = models.CharField(max_length=100, blank=True, null=True)
     repository = models.CharField(max_length=100, blank=True, null=True)
 
+    def __unicode__(self):
+        return "odML Doc (%s, %s, ver. %s)" % \
+            (self.author, str(self.date), self.version)
+
 
 class Section(BaseGnodeObject):
     """
@@ -56,11 +60,8 @@ class Section(BaseGnodeObject):
     objects = SectionManager()
 
     def __unicode__(self):
-        return self.type
-
-    @models.permalink
-    def get_absolute_url(self):
-        return 'section_details', [self.local_id_as_str]
+        name = " (%s)" % self.name if self.name else ""
+        return self.type + name
 
     @property
     def sections(self):
@@ -144,10 +145,6 @@ class Property(BaseGnodeObject):
     def __unicode__(self):
         return self.name
 
-    @models.permalink
-    def get_absolute_url(self):
-        return 'property_details', [self.local_id_as_str]
-
 
 class Value(BaseGnodeObject):
     """
@@ -165,7 +162,3 @@ class Value(BaseGnodeObject):
 
     def __unicode__(self):
         return self.type
-
-    @models.permalink
-    def get_absolute_url(self):
-        return 'value_details', [self.local_id_as_str]

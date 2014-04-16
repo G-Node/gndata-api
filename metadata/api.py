@@ -3,11 +3,11 @@ from tastypie import fields
 from tastypie.authentication import SessionAuthentication
 
 from rest.authorization import BaseAuthorization
-from rest.resource import BaseModelResource
+from rest.resource import BaseGNodeResource
 from metadata.models import Document, Section, Property, Value
 
 
-class DocumentResource(BaseModelResource):
+class DocumentResource(BaseGNodeResource):
 
     class Meta:
         queryset = Document.objects.all()
@@ -24,7 +24,7 @@ class DocumentResource(BaseModelResource):
         authorization = BaseAuthorization()
 
 
-class SectionResource(BaseModelResource):
+class SectionResource(BaseGNodeResource):
     document = fields.ForeignKey(DocumentResource, 'document')
     section = fields.ToOneField('self', 'section', blank=True, null=True)
     section_set = fields.ToManyField(
@@ -56,7 +56,7 @@ class SectionResource(BaseModelResource):
         authorization = BaseAuthorization()
 
 
-class PropertyResource(BaseModelResource):
+class PropertyResource(BaseGNodeResource):
     section = fields.ToOneField(SectionResource, 'section')
 
     class Meta:
@@ -76,7 +76,7 @@ class PropertyResource(BaseModelResource):
         authorization = BaseAuthorization()
 
 
-class ValueResource(BaseModelResource):
+class ValueResource(BaseGNodeResource):
     property = fields.ForeignKey(PropertyResource, 'property')
 
     class Meta:

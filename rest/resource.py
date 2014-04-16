@@ -8,7 +8,7 @@ from tastypie.utils import trailing_slash
 from account.api import UserResource
 
 
-class BaseModelResource(ModelResource):
+class BaseGNodeResource(ModelResource):
 
     owner = fields.ForeignKey(UserResource, 'owner')
 

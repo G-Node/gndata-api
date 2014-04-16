@@ -86,7 +86,7 @@ class BaseVersionedObject(models.Model):
 
     def get_absolute_url(self):
         """ by default this should be similar to that """
-        return ''.join(['/', get_type(self), '/', self.local_id_as_str, '/'])
+        return ''.join(['/', self.get_type, '/', self.local_id_as_str, '/'])
 
     def is_active(self):
         return not self.ends_at
