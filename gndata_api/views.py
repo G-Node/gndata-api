@@ -27,7 +27,7 @@ def list_view(request, resource_type):
     schema = res.build_schema()
 
     content = {
-        'objects': queryset,
+        'obj_list': queryset,
         'resource_type': resource_type,
         'schema': schema
     }
@@ -46,11 +46,34 @@ def detail_view(request, resource_type, id):
     bundle = res.build_bundle(obj=obj, request=request)
     res.full_dehydrate(bundle, for_list=True)
 
-    obj_as_json = res.serialize(None, bundle, "application/json")
+    obj_as_json = json.loads(res.serialize(None, bundle, "application/json"))
+
+    schema = res.build_schema()
+    fields = schema['fields']
+
+    normal = lambda x: x['type'] != 'related'
+    normal_names = [k for k, v in fields.items() if normal(v)]
+    normal_fields = dict([(k, v) for k, v in obj_as_json.items()
+                          if k in normal_names])
+
+    to_one = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
+    to_one_names = [k for k, v in fields.items() if to_one(v)]
+    to_one_fields = dict([(n, getattr(obj, n)) for n in to_one_names
+                          if getattr(obj, n) is not None])
+
+    to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
+    to_many_names = [k for k, v in fields.items() if to_many(v)]
+    to_many_fields = {}
+    for n in to_many_names:
+        qs = getattr(obj, n).all()
+        if len(qs) > 0:
+            to_many_fields[qs.model.__name__.lower()] = qs
 
     content = {
         'obj': obj,
         'resource_type': resource_type,
-        'obj_as_json': json.loads(obj_as_json)
+        'normal_fields': normal_fields,
+        'to_one_fields': to_one_fields,
+        'to_many_fields': to_many_fields
     }
     return render_to_response('detail_view.html', content)

@@ -8,6 +8,10 @@ from metadata.models import Document, Section, Property, Value
 
 
 class DocumentResource(BaseGNodeResource):
+    section_set = fields.ToManyField(
+        'metadata.api.SectionResource', 'section_set', related_name='document',
+        full=False, blank=True, null=True
+    )
 
     class Meta:
         queryset = Document.objects.all()
@@ -41,6 +45,7 @@ class SectionResource(BaseGNodeResource):
         resource_name = 'section'
         excludes = ['starts_at', 'ends_at']
         filtering = {
+            'local_id': ALL,
             'name': ALL,
             'type': ALL,
             'reference': ALL,
@@ -58,6 +63,10 @@ class SectionResource(BaseGNodeResource):
 
 class PropertyResource(BaseGNodeResource):
     section = fields.ToOneField(SectionResource, 'section')
+    value_set = fields.ToManyField(
+        'metadata.api.ValueResource', 'value_set', related_name='property',
+        full=False, blank=True, null=True
+    )
 
     class Meta:
         queryset = Property.objects.all()

@@ -2,31 +2,6 @@
 
 {% block content %}
 
-    <div class="panel panel-default">
-        <!-- Default panel contents -->
-        <div class="panel-heading">Selection of objects of type "{{ resource_type }}"</div>
-
-        <!-- Table -->
-        <table class="table">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Date created</th>
-                <th>Owner</th>
-                <th>Description</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for obj in objects %}
-                <tr>
-                    <td><a href="{{ obj.get_absolute_url }}">{{ obj.local_id_as_str }}</a></td>
-                    <td>{{ obj.date_created }}</td>
-                    <td><a href="{{ obj.owner.get_absolute_url }}">{{ obj.owner.username }}</a></td>
-                    <td>{{ obj }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    {% include "list.html" %}
 
 {% endblock %}

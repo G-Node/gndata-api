@@ -18,7 +18,7 @@ class Document(BaseGnodeObject, PermissionsBase):
     repository = models.CharField(max_length=100, blank=True, null=True)
 
     def __unicode__(self):
-        return "odML Doc (%s, %s, ver. %s)" % \
+        return "odML Document (by %s, %s, ver. %s)" % \
             (self.author, str(self.date), self.version)
 
 
@@ -60,8 +60,10 @@ class Section(BaseGnodeObject):
     objects = SectionManager()
 
     def __unicode__(self):
-        name = " (%s)" % self.name if self.name else ""
-        return self.type + name
+        if self.name:
+            return "%s (%s)" % (self.name, self.type)
+        else:
+            return self.type
 
     @property
     def sections(self):
