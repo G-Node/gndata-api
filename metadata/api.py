@@ -1,14 +1,13 @@
-from tastypie.resources import ModelResource, ALL, ALL_WITH_RELATIONS
+from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
 from tastypie.authentication import SessionAuthentication
 
 from rest.authorization import BaseAuthorization
+from rest.resource import BaseModelResource
 from metadata.models import Document, Section, Property, Value
-from account.api import UserResource
 
 
-class DocumentResource(ModelResource):
-    owner = fields.ForeignKey(UserResource, 'owner')
+class DocumentResource(BaseModelResource):
 
     class Meta:
         queryset = Document.objects.all()
@@ -25,10 +24,17 @@ class DocumentResource(ModelResource):
         authorization = BaseAuthorization()
 
 
-class SectionResource(ModelResource):
+class SectionResource(BaseModelResource):
     document = fields.ForeignKey(DocumentResource, 'document')
     section = fields.ToOneField('self', 'section', blank=True, null=True)
-    owner = fields.ForeignKey(UserResource, 'owner')
+    section_set = fields.ToManyField(
+        'metadata.api.SectionResource', 'section_set', related_name='section',
+        full=False, blank=True, null=True
+    )  # FIXME always empty
+    property_set = fields.ToManyField(
+        'metadata.api.PropertyResource', 'property_set', related_name='section',
+        full=False, blank=True, null=True
+    )
 
     class Meta:
         queryset = Section.objects.all()
@@ -50,9 +56,8 @@ class SectionResource(ModelResource):
         authorization = BaseAuthorization()
 
 
-class PropertyResource(ModelResource):
-    section = fields.ForeignKey(SectionResource, 'section')
-    owner = fields.ForeignKey(UserResource, 'owner')
+class PropertyResource(BaseModelResource):
+    section = fields.ToOneField(SectionResource, 'section')
 
     class Meta:
         queryset = Property.objects.all()
@@ -71,9 +76,8 @@ class PropertyResource(ModelResource):
         authorization = BaseAuthorization()
 
 
-class ValueResource(ModelResource):
+class ValueResource(BaseModelResource):
     property = fields.ForeignKey(PropertyResource, 'property')
-    owner = fields.ForeignKey(UserResource, 'owner')
 
     class Meta:
         queryset = Value.objects.all()

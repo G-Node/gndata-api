@@ -42,7 +42,7 @@ class Section(BaseGnodeObject):
     repository = models.CharField(max_length=100, blank=True, null=True)
     mapping = models.CharField(max_length=100, blank=True, null=True)
     section = VersionedForeignKey(
-        'self', blank=True, null=True, related_name='parent_section',
+        'self', blank=True, null=True, related_name='section_set',
         on_delete=models.CASCADE
     )
     document = VersionedForeignKey(Document, on_delete=models.CASCADE)

@@ -11,9 +11,14 @@ class SectionQuerySet(VersionedQuerySet):
 
     def update(self, **kwargs):
         objs = self._clone().all()
-        obj = objs[0]
-        assert len(objs) == 1  # bulk updates are not allowed
 
+        if len(objs) > 1:  # bulk updates are not allowed
+            raise ValueError("bulk updates are not allowed.")
+
+        if len(objs) == 0:
+            return
+
+        obj = objs[0]
         test = lambda x: (not x.primary_key) and x.editable
         allowed = [f.name for f in self.model._meta.local_fields if test(f)]
 
