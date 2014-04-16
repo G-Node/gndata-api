@@ -123,13 +123,13 @@ class PermissionsBase(models.Model):
         if issubclass(queryset.model, cls):
             if not update:
                 # 1. all public objects 
-                q1 = queryset.filter(safety_level=1).exclude(owner=user)
+                q1 = queryset.filter(safety_level=1).exclude(owner=user.id)
 
                 # 2. all *friendly*-shared objects are currently skipped
 
                 # 3. All private direct shares
                 direct_shares = SingleAccess.objects.filter(
-                    access_for=user,
+                    access_for=user.id,
                     object_type=queryset.model.acl_type()
                 )
                 dir_acc = [sa.object_id for sa in direct_shares]
@@ -140,7 +140,7 @@ class PermissionsBase(models.Model):
             else:
                 # 1. All private direct shares with 'edit' level
                 direct_shares = SingleAccess.objects.filter(
-                    access_for=user,
+                    access_for=user.id,
                     object_type=queryset.model.acl_type(),
                     access_level=2
                 )
@@ -152,7 +152,7 @@ class PermissionsBase(models.Model):
             perm_filtered = queryset.none()
 
         # owned objects always available
-        queryset = perm_filtered | queryset.filter(owner=user)
+        queryset = perm_filtered | queryset.filter(owner=user.id)
         return queryset
 
     @classmethod
@@ -216,7 +216,7 @@ class SingleAccess(models.Model):
     object_id = models.BigIntegerField()  # local ID of the shareable object
     object_type = models.CharField(max_length=30)
     # the pair above identifies a unique object for ACL record
-    access_for = models.ForeignKey(User) # with whom it is shared
+    access_for = models.ForeignKey(User)  # with whom it is shared
     access_level = models.IntegerField(choices=ACCESS_LEVELS, default=1)
 
 

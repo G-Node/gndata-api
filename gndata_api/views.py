@@ -1,5 +1,6 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponseBadRequest
+from django.template import RequestContext
 
 from metadata.api import *
 from gndata_api.utils import base32int
@@ -31,7 +32,8 @@ def list_view(request, resource_type):
         'resource_type': resource_type,
         'schema': schema
     }
-    return render_to_response('list_view.html', content)
+    return render_to_response('list_view.html', content,
+                              context_instance=RequestContext(request))
 
 
 def detail_view(request, resource_type, id):
@@ -76,4 +78,5 @@ def detail_view(request, resource_type, id):
         'to_one_fields': to_one_fields,
         'to_many_fields': to_many_fields
     }
-    return render_to_response('detail_view.html', content)
+    return render_to_response('detail_view.html', content,
+                              context_instance=RequestContext(request))
