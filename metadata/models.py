@@ -1,12 +1,33 @@
 from django.db import models
 from django.utils import timezone
-from state_machine.models import BaseGnodeObject, PermissionsBase
+from state_machine.models import BaseGnodeObject, BaseGnodeObjectWithACL
 from state_machine.versioning.descriptors import VersionedForeignKey
 
 from metadata.queryset import SectionManager
 
 
-class Document(BaseGnodeObject, PermissionsBase):
+class DocumentBasedPermissionsMixin(object):
+    """
+    Abstract class that implements access management methods for objects with
+    Document-dependent security.
+    """
+
+    def is_accessible(self, user):
+        doc = self.document
+        return doc.is_public or (user in doc.access_list) or self.owner == user
+
+    def is_editable(self, user):
+        doc = self.document
+        return (user in doc.access_list and
+                doc.get_access_for_user(user).access_level == 2) \
+               or self.owner == user
+
+    @classmethod
+    def security_filter(cls, queryset, user, update=False):
+        return queryset.filter(owner=user.id)
+
+
+class Document(BaseGnodeObjectWithACL):
     """
     Class represents a metadata "Document".
     """

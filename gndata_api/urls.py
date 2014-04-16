@@ -22,7 +22,7 @@ urlpatterns = patterns('',
 
     # common -------------------------------------------------------------------
 
-    url(r'^$', RedirectView.as_view(url='/account/login')),
+    url(r'^$', RedirectView.as_view(url='/account/login/')),
     #url(r'^home/$', TemplateView.as_view(template_name='home.html')),
     url(r'^home/$', RedirectView.as_view(url='/document/')),
     url(r'^account/', include('account.urls')),

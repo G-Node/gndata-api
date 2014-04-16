@@ -22,8 +22,12 @@ class BaseGnodeObject(BaseVersionedObject):
         """ by default object is editable for it's owner """
         return self.owner == user
 
+    @classmethod
+    def security_filter(cls, queryset, user, update=False):
+        return queryset.filter(owner=user.id)
 
-class PermissionsBase(models.Model):
+
+class BaseGnodeObjectWithACL(BaseGnodeObject):
     """
     Safety level represents a level of access to an object by other users. An 
     object can be Public (all users have access), Friendly (all "friends" have 
@@ -68,7 +72,7 @@ class PermissionsBase(models.Model):
             else:  # create new access
                 SingleAccess(
                     object_id=self.local_id,
-                    object_type=self.acl_type(),
+                    object_type=self.acl_type,
                     access_for=u,
                     access_level=level
                 ).save()
@@ -83,6 +87,7 @@ class PermissionsBase(models.Model):
         - safety_level is an int (see self.SAFETY_LEVELS)
         - users is a dict { <user_id>: <access_level>, } (see ACCESS_LEVELS)
         """
+        # FIXME merge somehow into 'share'?
 
         # first update safety level
         if safety_level and not self.safety_level == safety_level:
@@ -92,14 +97,14 @@ class PermissionsBase(models.Model):
             self.save()
 
         # update single user shares
-        if not users == None:
+        if not users is None:
             self.share(users)
 
         # propagate down the hierarchy if cascade
         if cascade:
             for related in self._meta.get_all_related_objects():
                 # validate if reversed child can be shared
-                if issubclass(related.model, PermissionsBase):
+                if issubclass(related.model, BaseGnodeObjectWithACL):
                     for obj in getattr(self, related.get_accessor_name()).all():
                         obj.acl_update(safety_level, users, cascade)
 
@@ -108,72 +113,27 @@ class PermissionsBase(models.Model):
         """ returns a QuerySet of all specific accesses. Method relies on 
         'parent' object's ID and type (this is an abstract class anyway) """
         return SingleAccess.objects.filter(object_id=self.local_id,
-                                           object_type=self.acl_type())
+                                           object_type=self.acl_type)
 
-    @classmethod
-    def security_filter(cls, queryset, user, update=False):
-        """ filters given queryset for objects available for a given user. Does 
-        not evaluate QuerySet, does not hit the database. """
+    @property
+    def acl_type(self):
+        """ object type for direct permissions """
+        return self.__class__.__name__.lower()
 
-        #if not "owner" in [x.name for x in queryset.model._meta.local_fields]:
-        #    return queryset  # non-multiuser objects are fully available
-        if not issubclass(queryset.model, cls):
-            return queryset  # non-multiuser objects are fully available
-
-        if issubclass(queryset.model, cls):
-            if not update:
-                # 1. all public objects 
-                q1 = queryset.filter(safety_level=1).exclude(owner=user.id)
-
-                # 2. all *friendly*-shared objects are currently skipped
-
-                # 3. All private direct shares
-                direct_shares = SingleAccess.objects.filter(
-                    access_for=user.id,
-                    object_type=queryset.model.acl_type()
-                )
-                dir_acc = [sa.object_id for sa in direct_shares]
-                q3 = queryset.filter(pk__in=dir_acc)
-
-                perm_filtered = q1 | q3
-
-            else:
-                # 1. All private direct shares with 'edit' level
-                direct_shares = SingleAccess.objects.filter(
-                    access_for=user.id,
-                    object_type=queryset.model.acl_type(),
-                    access_level=2
-                )
-                dir_acc = [sa.object_id for sa in direct_shares]
-
-                # not to damage QuerySet
-                perm_filtered = queryset.filter(pk__in=dir_acc)
-        else:
-            perm_filtered = queryset.none()
-
-        # owned objects always available
-        queryset = perm_filtered | queryset.filter(owner=user.id)
-        return queryset
-
-    @classmethod
-    def acl_type(cls):
-        """ object type for direct permissions. normally the lowercase name of 
-        the class """
-        return cls.__name__.lower()
-
+    @property
     def access_list(self):
         """ returns list of users having personal access to the object """
         return [x.access_for for x in self.shared_with]
 
-    def remove_all_shares(self):
-        raise NotImplementedError
-
+    @property
     def is_public(self):
         return self.safety_level == 1
 
+    @property
     def is_friendly(self):
         return self.safety_level == 2
 
+    @property
     def is_private(self):
         return self.safety_level == 3
 
@@ -185,8 +145,8 @@ class PermissionsBase(models.Model):
     def is_accessible(self, user):
         """ Defines whether an object (Datafile etc) is accessible for a given
         user (either readable or editable) """
-        return self.is_editable(user) or self.is_public() or \
-               (user in self.access_list()) or self.owner == user
+        return self.is_public or (user in self.access_list) \
+               or self.owner == user
 
     def is_editable(self, user):
         """ User may edit if:
@@ -194,8 +154,47 @@ class PermissionsBase(models.Model):
         - user has a direct access with level 2 (edit)
         """
         return self.owner == user or \
-               (user in self.access_list() and
+               (user in self.access_list and
                 self.get_access_for_user(user).access_level == 2)
+
+    @classmethod
+    def security_filter(cls, queryset, user, update=False):
+        """ filters given queryset for objects available for a given user. Does
+        not evaluate QuerySet, does not hit the database. """
+
+        if not issubclass(queryset.model, cls):
+            raise ReferenceError("Cannot filter queryset of an alien type.")
+
+        if not update:
+            # 1. all public objects
+            q1 = queryset.filter(safety_level=1).exclude(owner=user.id)
+
+            # 2. all *friendly*-shared objects are currently skipped
+
+            # 3. All private direct shares
+            direct_shares = SingleAccess.objects.filter(
+                access_for=user.id,
+                object_type=queryset.model.acl_type
+            )
+            dir_acc = [sa.object_id for sa in direct_shares]
+            q3 = queryset.filter(pk__in=dir_acc)
+
+            perm_filtered = q1 | q3
+
+        else:
+            # 1. All private direct shares with 'edit' level
+            direct_shares = SingleAccess.objects.filter(
+                access_for=user.id,
+                object_type=queryset.model.acl_type,
+                access_level=2
+            )
+            dir_acc = [sa.object_id for sa in direct_shares]
+
+            # not to damage QuerySet
+            perm_filtered = queryset.filter(pk__in=dir_acc)
+
+        # owned objects always available
+        return perm_filtered | queryset.filter(owner=user.id)
 
 
 class SingleAccess(models.Model):
@@ -248,7 +247,7 @@ class ObjectExtender(object):
         if hasattr(self.model, 'acl_type') and issubclass(self.model, BaseGnodeObject) and user:
             # fetch single accesses for all objects
             accs = SingleAccess.objects.filter(object_id__in=ids,
-                                               object_type=self.model.acl_type())
+                                               object_type=self.model.acl_type)
 
             # parse accesses to objects
             for obj in objects:

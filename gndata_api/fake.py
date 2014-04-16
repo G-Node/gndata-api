@@ -3,7 +3,7 @@ from django.db import connection
 from django.core.management.color import no_style
 from gndata_api import settings
 
-from state_machine.models import BaseGnodeObject, PermissionsBase
+from state_machine.models import BaseGnodeObject, BaseGnodeObjectWithACL
 from state_machine.versioning.models import VersionedM2M
 from state_machine.versioning.descriptors import VersionedForeignKey
 from state_machine.versioning.descriptors import VersionedManyToManyField
@@ -43,7 +43,7 @@ class parent_fake(VersionedM2M):
     fake = VersionedForeignKey(FakeModel)
 
 
-class FakeOwnedModel(BaseGnodeObject, PermissionsBase):
+class FakeOwnedModel(BaseGnodeObjectWithACL):
     """ simple versioned model with permissions """
     test_attr = models.IntegerField()
 
