@@ -51,4 +51,4 @@ class SignUpForm(forms.ModelForm):
             first_name=self.cleaned_data["first_name"],
             last_name=self.cleaned_data["last_name"]
         )
-        return new_user
+        return new_user.username, self.cleaned_data["password1"]
