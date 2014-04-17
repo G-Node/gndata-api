@@ -8,8 +8,15 @@ from metadata.models import Document, Section, Property, Value
 
 
 class DocumentResource(BaseGNodeResource):
+    #section_set = fields.ToManyField(
+    #    'metadata.api.SectionResource', 'section_set', related_name='document',
+    #    full=False, blank=True, null=True
+    #)
+
     section_set = fields.ToManyField(
-        'metadata.api.SectionResource', 'section_set', related_name='document',
+        'metadata.api.SectionResource', attribute=lambda bundle:
+        Section.objects.filter(document=bundle.obj, section__isnull=True),
+        related_name='document',
         full=False, blank=True, null=True
     )
 

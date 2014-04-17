@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 from django.http import HttpResponseBadRequest
 from django.template import RequestContext
+from django.utils import six
 
 from metadata.api import *
 from gndata_api.utils import base32int
@@ -37,6 +38,18 @@ def list_view(request, resource_type):
 
 
 def detail_view(request, resource_type, id):
+
+    def get_related_objs(resource, field_name, bundle):
+        """ field name should be of 'related' type """
+        attribute = getattr(resource, field_name).attribute
+
+        if isinstance(attribute, six.string_types):
+            return getattr(bundle.obj, attribute, None)
+
+        elif callable(attribute):
+            return attribute(bundle)
+
+
     if not resource_type in RESOURCES.keys():
         message = "Objects of type %s are note supported." % resource_type
         return HttpResponseBadRequest(message)
@@ -53,21 +66,24 @@ def detail_view(request, resource_type, id):
     schema = res.build_schema()
     fields = schema['fields']
 
+    # parsing standard attributes for rendering
     normal = lambda x: x['type'] != 'related'
     normal_names = [k for k, v in fields.items() if normal(v)]
     normal_fields = dict([(k, v) for k, v in obj_as_json.items()
                           if k in normal_names])
 
+    # parsing FK fields for rendering
     to_one = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
     to_one_names = [k for k, v in fields.items() if to_one(v)]
     to_one_fields = dict([(n, getattr(obj, n)) for n in to_one_names
                           if getattr(obj, n) is not None])
 
+    # parsing reversed relationships for rendering
     to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
     to_many_names = [k for k, v in fields.items() if to_many(v)]
     to_many_fields = {}
     for n in to_many_names:
-        qs = getattr(obj, n).all()
+        qs = get_related_objs(res, n, bundle).all()
         if len(qs) > 0:
             to_many_fields[qs.model.__name__.lower()] = qs
 
