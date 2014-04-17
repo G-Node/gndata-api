@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from gndata_api.baseassets import BaseAssets
 from metadata.models import *
 
@@ -47,7 +48,8 @@ class Assets(BaseAssets):
                 'date': timezone.now(),
                 'version': 1.0,
                 'repository': url,
-                'owner': bob if i < 2 else ed
+                'owner': bob if i < 2 else ed,
+                'safety_level': 3 if i < 2 else 1
             }
             assets['document'].append(Document.objects.create(**params))
 

@@ -8,11 +8,6 @@ from metadata.models import Document, Section, Property, Value
 
 
 class DocumentResource(BaseGNodeResource):
-    #section_set = fields.ToManyField(
-    #    'metadata.api.SectionResource', 'section_set', related_name='document',
-    #    full=False, blank=True, null=True
-    #)
-
     section_set = fields.ToManyField(
         'metadata.api.SectionResource', attribute=lambda bundle:
         Section.objects.filter(document=bundle.obj, section__isnull=True),
@@ -41,7 +36,7 @@ class SectionResource(BaseGNodeResource):
     section_set = fields.ToManyField(
         'metadata.api.SectionResource', 'section_set', related_name='section',
         full=False, blank=True, null=True
-    )  # FIXME always empty
+    )
     property_set = fields.ToManyField(
         'metadata.api.PropertyResource', 'property_set', related_name='section',
         full=False, blank=True, null=True
@@ -78,7 +73,7 @@ class PropertyResource(BaseGNodeResource):
     class Meta:
         queryset = Property.objects.all()
         resource_name = 'property'
-        excludes = ['starts_at', 'ends_at']
+        excludes = ['starts_at', 'ends_at', 'document']
         filtering = {
             'name': ALL,
             'definition': ALL,
@@ -98,7 +93,7 @@ class ValueResource(BaseGNodeResource):
     class Meta:
         queryset = Value.objects.all()
         resource_name = 'value'
-        excludes = ['starts_at', 'ends_at']
+        excludes = ['starts_at', 'ends_at', 'document']
         filtering = {
             'type': ALL,
             'uncertainty': ALL,

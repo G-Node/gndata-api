@@ -1,6 +1,6 @@
 from django.db import models
-from django.utils import timezone
 from state_machine.models import BaseGnodeObject, BaseGnodeObjectWithACL
+from state_machine.models import SingleAccess
 from state_machine.versioning.descriptors import VersionedForeignKey
 
 from metadata.queryset import SectionManager
@@ -24,7 +24,37 @@ class DocumentBasedPermissionsMixin(object):
 
     @classmethod
     def security_filter(cls, queryset, user, update=False):
-        return queryset.filter(owner=user.id)
+        if not issubclass(queryset.model, cls):
+            raise ReferenceError("Cannot filter queryset of an alien type.")
+
+        if not update:
+            # all public objects
+            q1 = queryset.filter(safety_level=1).exclude(owner=user.id)
+
+            # all private direct shares
+            direct_shares = SingleAccess.objects.filter(
+                access_for=user.id,
+                object_type='document'
+            )
+            dir_acc = [sa.object_id for sa in direct_shares]
+            q2 = queryset.filter(document_id__in=dir_acc)
+
+            perm_filtered = q1 | q2
+
+        else:
+            # all private direct shares with 'edit' level
+            direct_shares = SingleAccess.objects.filter(
+                access_for=user.id,
+                object_type='document',
+                access_level=2
+            )
+            dir_acc = [sa.object_id for sa in direct_shares]
+
+            # not to damage QuerySet
+            perm_filtered = queryset.filter(document_id__in=dir_acc)
+
+        # owned objects always available
+        return perm_filtered | queryset.filter(owner=user.id)
 
 
 class Document(BaseGnodeObjectWithACL):
@@ -43,7 +73,7 @@ class Document(BaseGnodeObjectWithACL):
             (self.author, str(self.date), self.version)
 
 
-class Section(BaseGnodeObject):
+class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
     Class represents a metadata "Section". Used to organize metadata
     (properties - values), Datafiles and NEO Blocks in a tree-like structure.
@@ -151,7 +181,7 @@ class Section(BaseGnodeObject):
         super(Section, self).save(*args, **kwargs)
 
 
-class Property(BaseGnodeObject):
+class Property(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
     Class represents a metadata "Property". Defines any kind of metadata
     property and may be linked to the Section.
@@ -164,12 +194,17 @@ class Property(BaseGnodeObject):
     dependency = models.CharField(max_length=100, blank=True, null=True)
     dependencyvalue = models.CharField(max_length=100, blank=True, null=True)
     section = VersionedForeignKey(Section, on_delete=models.CASCADE)
+    document = VersionedForeignKey(Document)
 
     def __unicode__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        self.document = self.section.document
+        super(Property, self).save(*args, **kwargs)
 
-class Value(BaseGnodeObject):
+
+class Value(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
     Class implemented metadata Value.
     """
@@ -182,6 +217,11 @@ class Value(BaseGnodeObject):
     encoder = models.CharField(max_length=100, blank=True, null=True)
     checksum = models.CharField(max_length=100, blank=True, null=True)
     property = VersionedForeignKey(Property, on_delete=models.CASCADE)
+    document = VersionedForeignKey(Document)
 
     def __unicode__(self):
         return self.type
+
+    def save(self, *args, **kwargs):
+        self.document = self.property.document
+        super(Value, self).save(*args, **kwargs)
