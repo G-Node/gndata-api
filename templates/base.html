@@ -63,18 +63,23 @@
         <div class="navbar-collapse collapse">
 
             {% block navbar %}
-            <ul class="nav navbar-nav">
-                <li class=""><a href="/">G-Node Data Management Platform</a></li>
-            </ul>
 
             {% if user.is_authenticated %}
+                <ul class="nav navbar-nav">
+                    <li class=""><a href="#">G-Node Data Management Platform</a></li>
+                </ul>
                 <ul class="nav navbar-nav">
                     <li class=""><a href="/document/">Documents</a></li>
                 </ul>
                 <ul class="nav navbar-nav">
                     <li class=""><a href="/dataset/">Datasets</a></li>
                 </ul>
+            {% else %}
+                <ul class="nav navbar-nav">
+                    <li class=""><a href="/">G-Node Data Management Platform</a></li>
+                </ul>
             {% endif %}
+
             {% endblock %}
 
             {% block navbar-right %}
