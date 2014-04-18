@@ -3,6 +3,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from tastypie.resources import ModelResource
 from tastypie.utils import trailing_slash
 from tastypie import http
+from permissions.api import ACLResource
 
 
 class PermissionsResourceMixin(ModelResource):
@@ -29,7 +30,13 @@ class PermissionsResourceMixin(ModelResource):
         except MultipleObjectsReturned:
             return http.HttpMultipleChoices("More than one resource is found at this URI.")
 
-        # TODO
-        # acl_resource = ACLResource()
-        # acl_resource.get_list(request, local_id=obj.pk, acl_type=obj.acl_type)
-        return http.HttpNoContent()
+        acl_resource = ACLResource()
+        if request.GET:
+            request.GET['object_id'] = obj.pk
+            request.GET['object_type'] = obj.acl_type
+            return acl_resource.obj_get_list(request)
+
+        elif request.PUT:
+            pass
+
+        return http.HttpMethodNotAllowed("Use GET or PUT to manage permissions")
