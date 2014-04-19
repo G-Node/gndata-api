@@ -1,7 +1,7 @@
+from gndata_api.utils import update_keys_for_model
 from rest.tests.base import TestApi
 from metadata.api import *
 from metadata.tests.assets import Assets
-from gndata_api.fake import update_keys_for_model
 
 
 class TestMetadataApi(TestApi):

@@ -1,10 +1,10 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from gndata_api.utils import update_keys_for_model
 
 from metadata.models import *
 from metadata.tests.assets import Assets
-from gndata_api.fake import update_keys_for_model
 
 
 class TestSection(TestCase):
