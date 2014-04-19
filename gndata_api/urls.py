@@ -14,6 +14,11 @@ v1_api.register(PropertyResource())
 v1_api.register(ValueResource())
 v1_api.register(UserResource())
 
+if True:  # FIXME add condition only if in test
+    from permissions.tests.fake import FakeResource, FakeOwnedResource
+    v1_api.register(FakeResource())
+    v1_api.register(FakeOwnedResource())
+
 
 urlpatterns = patterns('',
     # Examples:
