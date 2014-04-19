@@ -21,9 +21,13 @@ class BasePermissionsMixin(models.Model):
         abstract = True
 
     def share(self, users):
-        """ performs an update of all personal accesses to an object;
-        users is a dict of the form {'user_id': 'access level', } """
-        def validate_user(user):
+        """ performs an update of the related ACL.
+
+        :param  users   new personal accesses to an object
+        :type   users   [{'user': <user_id>, 'level': <access level>}, ...]
+
+        """
+        def validate_user(user_id):
             try:
                 return User.objects.get(pk=int(user_id))
             except:
@@ -54,34 +58,6 @@ class BasePermissionsMixin(models.Model):
 
         for u in users_to_remove:  # delete legacy accesses
             self.shared_with.get(access_for=u).delete()
-
-    def acl_update(self, safety_level=None, users=None, cascade=False):
-        """ update object safety level and direct user permissions (cascade).
-        Note.
-
-        - safety_level is an int (see self.SAFETY_LEVELS)
-        - users is a dict { <user_id>: <access_level>, } (see ACCESS_LEVELS)
-        """
-        # FIXME merge somehow into 'share'?
-
-        # first update safety level
-        if safety_level and not self.safety_level == safety_level:
-            if not int(safety_level) in dict(self.SAFETY_LEVELS).keys():
-                raise ValueError("Provided safety level is not valid: %s" % safety_level)
-            self.safety_level = safety_level
-            self.save()
-
-        # update single user shares
-        if not users is None:
-            self.share(users)
-
-        # propagate down the hierarchy if cascade
-        if cascade:
-            for related in self._meta.get_all_related_objects():
-                # validate if reversed child can be shared
-                if issubclass(related.model, BasePermissionsMixin):
-                    for obj in getattr(self, related.get_accessor_name()).all():
-                        obj.acl_update(safety_level, users, cascade)
 
     @property
     def shared_with(self):

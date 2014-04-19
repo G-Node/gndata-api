@@ -49,7 +49,6 @@ def detail_view(request, resource_type, id):
         elif callable(attribute):
             return attribute(bundle)
 
-
     if not resource_type in RESOURCES.keys():
         message = "Objects of type %s are note supported." % resource_type
         return HttpResponseBadRequest(message)
