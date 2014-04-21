@@ -5,6 +5,7 @@ from tastypie.utils import trailing_slash
 from tastypie import http, fields
 from tastypie import fields
 from tastypie.authentication import SessionAuthentication
+from tastypie.resources import ALL
 
 from permissions.authorization import ACLManageAuthorization
 from permissions.models import SingleAccess
@@ -42,6 +43,10 @@ class ACLResource(ModelResource):
         resource_name = 'acl'
         authentication = SessionAuthentication()
         authorization = ACLManageAuthorization()
+        filtering = {
+            'object_id': ALL,
+            'object_type': ALL
+        }
 
     def obj_get_list(self, bundle, **kwargs):
         keys = kwargs.keys()
@@ -78,13 +83,16 @@ class PermissionsResourceMixin(Resource):
         if not obj.owner.pk == request.user.pk:
             return http.HttpForbidden("No access to the ACL of this object")
 
-        if not request.type in ['GET', 'PUT']:
+        if not request.method in ['GET', 'PUT']:
             return http.HttpMethodNotAllowed("Use GET or PUT to manage permissions")
 
         acl_resource = ACLResource()
 
-        if request.type == 'PUT':
+        if request.method == 'PUT':
             users = acl_resource.deserialize(request, request.PUT.data)
+            import ipdb
+            ipdb.set_trace()
+
             obj.share(users)
 
         # possible option without resource
@@ -97,4 +105,5 @@ class PermissionsResourceMixin(Resource):
             'object_type': obj.acl_type
         }
         request_bundle = acl_resource.build_bundle(request=request)
-        return acl_resource.obj_get_list(request_bundle, **params)
+        data = acl_resource.obj_get_list(request_bundle, **params)
+        return acl_resource.create_response(request, data)

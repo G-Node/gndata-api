@@ -5,13 +5,11 @@ import urlparse
 import string
 import random
 
-
-# this is base32hex alphabet, used to create unique IDs
 from django.core.management.color import no_style
 from django.db import connection
 from gndata_api import settings
-from state_machine.models import BaseGnodeObject
 
+# this is base32hex alphabet, used to create unique IDs
 alphabet = tuple(list('0123456789' + string.ascii_uppercase)[:32])
 
 
@@ -149,14 +147,14 @@ def update_keys_for_model(model):
 
 
 def create_fake_model(prototype):
-    """ Create the schema for our prototype model """
+    """ Create the schema for the versioned prototype model """
     sql, _ = connection.creation.sql_create_model(prototype, no_style())
     _cursor = connection.cursor()
     for statement in sql:
         _cursor.execute(statement)
+
     # versioned objects require PRIMARY KEY change
-    if issubclass(prototype, BaseGnodeObject):
-        update_keys_for_model(prototype)
+    update_keys_for_model(prototype)
 
 
 def delete_fake_model(model):

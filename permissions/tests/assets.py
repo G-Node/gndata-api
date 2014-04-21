@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 
 from permissions.models import SingleAccess
 from gndata_api.baseassets import BaseAssets
-from gndata_api.fake import *
+from permissions.tests.fake import FakeModel, FakeOwnedModel
 
 
 class Assets(BaseAssets):
@@ -50,9 +50,11 @@ class Assets(BaseAssets):
             assets["fake"].append(obj)
 
         params = {
-            'object_id': assets['owned'].pk,
+            'object_id': assets['owned'][1].pk,
             'object_type': 'owned',
             'access_for': ed,
-            'access_type': 1
+            'access_level': 1
         }
         SingleAccess.objects.create(**params)
+
+        return assets

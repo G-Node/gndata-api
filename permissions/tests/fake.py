@@ -8,10 +8,15 @@ from state_machine.models import BaseGnodeObject
 from permissions.models import BasePermissionsMixin
 from state_machine.versioning.descriptors import VersionedForeignKey
 
-from permissions.resource import PermissionsResourceMixin, ACLResource
+from permissions.resource import PermissionsResourceMixin
 
 
 # models -----------------------------------------------------------------------
+
+
+class FakeOwnedModel(BasePermissionsMixin, BaseGnodeObject):
+    """ simple versioned model with permissions """
+    test_attr = models.IntegerField()
 
 
 class FakeModel(BaseGnodeObject):
@@ -21,11 +26,6 @@ class FakeModel(BaseGnodeObject):
     test_ref = VersionedForeignKey(
         FakeOwnedModel, blank=True, null=True, on_delete=models.SET_NULL
     )
-
-
-class FakeOwnedModel(BasePermissionsMixin, BaseGnodeObject):
-    """ simple versioned model with permissions """
-    test_attr = models.IntegerField()
 
 
 # resources --------------------------------------------------------------------

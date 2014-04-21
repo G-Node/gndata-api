@@ -3,6 +3,7 @@ from tastypie.test import ResourceTestCase
 from permissions.tests.assets import Assets
 from permissions.tests.fake import FakeResource, FakeOwnedResource
 
+
 class TestApi(ResourceTestCase):
     """
     Test class for per-object permissions testing.
@@ -11,6 +12,7 @@ class TestApi(ResourceTestCase):
     fixtures = ["users.json"]
 
     def setUp(self):
+        super(TestApi, self).setUp()
         self.bob = User.objects.get(pk=1)
         self.ed = User.objects.get(pk=2)
         self.neo = User.objects.get(pk=3)
@@ -19,25 +21,38 @@ class TestApi(ResourceTestCase):
         self.f_res = FakeResource()
         self.fo_res = FakeOwnedResource()
 
+    def get_auth(self, user):
+        # TODO check why this does not work
+        return self.create_basic(username=user.username, password='pass')
+
+    def login(self, user):
+        logged = self.client.login(username=user.username, password="pass")
+        self.assertTrue(logged)
+
+    def logout(self):
+        self.client.logout()
+
     def test_get_acl(self):
         obj = self.assets['owned'][1]  # object is shared via ACL
         name = self.fo_res.Meta.resource_name
         url = "/api/v1/%s/%d/acl/?format=json" % (name, obj.local_id)
 
-        self.login(self.ed)
+        # this does not proxy user credentials correctly, TODO find out why
+        #auth = self.get_auth(self.ed)
+        #response = self.api_client.get(url, format='json', authentication=auth)
 
+        self.login(self.ed)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 401, response.content)
 
-        # TODO login using tastypie
-
         self.logout()
         self.login(self.bob)
-
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200, response.content)
         self.assertValidJSONResponse(response)
 
+        import ipdb
+        ipdb.set_trace()
         # TODO validate only one access for Ed in the response
 
     def test_update_acl(self):
@@ -52,15 +67,12 @@ class TestApi(ResourceTestCase):
         name = self.fo_res.Meta.resource_name
         url = "/api/v1/%s/%d/acl/?format=json" % (name, obj.local_id)
 
-        self.login(self.ed)
-
-        response = self.client.put(url, data)
+        auth = self.get_auth(self.ed)
+        response = self.api_client.put(url, data=data, format='json', authentication=auth)
         self.assertEqual(response.status_code, 401, response.content)
 
-        self.logout()
-        self.login(self.bob)
-
-        response = self.client.put(url, data)
+        auth = self.get_auth(self.bob)
+        response = self.api_client.put(url, data=data, format='json', authentication=auth)
         self.assertEqual(response.status_code, 200, response.content)
         self.assertValidJSONResponse(response)
 
@@ -71,6 +83,3 @@ class TestApi(ResourceTestCase):
 
     def test_access_via_acl(self):
         pass
-
-    def tearDown(self):
-        self.assets.flush()
