@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 
 from permissions.models import SingleAccess
 from gndata_api.baseassets import BaseAssets
-from permissions.tests.fake import FakeModel, FakeOwnedModel
+from permissions.tests.fake import ACLFakeModel, ACLFakeOwnedModel
 
 
 class Assets(BaseAssets):
@@ -18,7 +18,7 @@ class Assets(BaseAssets):
     attr_values = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
 
     def __init__(self):
-        self.models = [FakeModel, FakeOwnedModel]
+        self.models = [ACLFakeModel, ACLFakeOwnedModel]
 
     def fill(self):
         super(Assets, self).fill()
@@ -35,22 +35,22 @@ class Assets(BaseAssets):
                 'test_attr': i + 1,
                 'owner': bob
             }
-            obj = FakeOwnedModel.objects.create(**params)
+            obj = ACLFakeOwnedModel.objects.create(**params)
             assets["owned"].append(obj)
 
         for i in range(3):
             params = {
                 'test_attr': i + 1,
                 'test_str_attr': self.attr_values[i + 1],
-                'owner': bob,
-                'test_ref': assets['owned'][i]
+                'test_ref': assets['owned'][i],
+                'owner': bob
             }
-            obj = FakeModel.objects.create(**params)
+            obj = ACLFakeModel.objects.create(**params)
             assets["fake"].append(obj)
 
         params = {
             'object_id': assets['owned'][1].pk,
-            'object_type': 'fakeownedmodel',
+            'object_type': 'aclfakeownedmodel',
             'access_for': ed,
             'access_level': 1
         }

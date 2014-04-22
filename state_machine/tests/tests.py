@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from gndata_api.fake import *
+from state_machine.tests.fake import *
 from state_machine.tests.assets import Assets
 
 

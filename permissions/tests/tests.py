@@ -93,3 +93,6 @@ class TestApi(ResourceTestCase):
 
     def test_access_via_acl(self):
         pass
+
+    def tearDown(self):
+        Assets().flush()

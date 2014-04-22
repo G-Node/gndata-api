@@ -14,17 +14,17 @@ from permissions.resource import PermissionsResourceMixin
 # models -----------------------------------------------------------------------
 
 
-class FakeOwnedModel(BasePermissionsMixin, BaseGnodeObject):
+class ACLFakeOwnedModel(BasePermissionsMixin, BaseGnodeObject):
     """ simple versioned model with permissions """
     test_attr = models.IntegerField()
 
 
-class FakeModel(BaseGnodeObject):
+class ACLFakeModel(BaseGnodeObject):
     """ simple versioned model """
     test_attr = models.IntegerField()
     test_str_attr = models.CharField(max_length=50, blank=True)
     test_ref = VersionedForeignKey(
-        FakeOwnedModel, blank=True, null=True, on_delete=models.SET_NULL
+        ACLFakeOwnedModel, blank=True, null=True, on_delete=models.SET_NULL
     )
 
 
@@ -35,7 +35,7 @@ class FakeResource(ModelResource):
     test_attr = fields.IntegerField(attribute='test_attr')
 
     class Meta:
-        queryset = FakeModel.objects.all()
+        queryset = ACLFakeModel.objects.all()
         resource_name = 'fakemodel'
         authentication = SessionAuthentication()
         authorization = BaseAuthorization()
@@ -45,7 +45,7 @@ class FakeOwnedResource(PermissionsResourceMixin, ModelResource):
     test_attr = fields.IntegerField(attribute='test_attr')
 
     class Meta:
-        queryset = FakeOwnedModel.objects.all()
+        queryset = ACLFakeOwnedModel.objects.all()
         resource_name = 'fakeownedmodel'
         authentication = SessionAuthentication()
         authorization = BaseAuthorization()

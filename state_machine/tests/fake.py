@@ -1,7 +1,6 @@
 from django.db import models
 
 from state_machine.models import BaseGnodeObject
-from permissions.models import BasePermissionsMixin
 from state_machine.versioning.models import VersionedM2M
 from state_machine.versioning.descriptors import VersionedForeignKey
 from state_machine.versioning.descriptors import VersionedManyToManyField
@@ -38,8 +37,3 @@ class parent_fake(VersionedM2M):
     """ M2M relationship class """
     parent = VersionedForeignKey(FakeParentModel)
     fake = VersionedForeignKey(FakeModel)
-
-
-class FakeOwnedModel(BasePermissionsMixin, BaseGnodeObject):
-    """ simple versioned model with permissions """
-    test_attr = models.IntegerField()
