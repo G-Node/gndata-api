@@ -15,7 +15,7 @@ from ephys.fields import TimeUnitField, SignalUnitField, SamplingUnitField
 
 def make_upload_path(self, filename):
     """ Generates upload path for FileField """
-    return "data/%s/%s" % (self.owner.username, filename)
+    return "%s/%s" % (self.owner.username, filename)
 
 
 DEFAULTS = {
@@ -215,7 +215,6 @@ class RecordingChannel(BlockBasedPermissionsMixin, BaseInfo):
                        through='recordingchannel_rcg', blank=True, null=True)
 
     def save(self, *args, **kwargs):
-        self.block = self.recordingchannelgroup[0].block
         super(RecordingChannel, self).save(*args, **kwargs)
 
 

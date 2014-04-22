@@ -40,7 +40,8 @@ INSTALLED_APPS = (
     'permissions',
     'state_machine',
     'account',
-    'metadata'
+    'metadata',
+    'ephys'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -119,3 +120,9 @@ REST_CONFIG = {
 }
 
 TASTYPIE_FULL_DEBUG = True
+
+# Absolute path to the directory that holds storage of USER FILES.
+FILE_MEDIA_ROOT = "/data/gndata/private/"
+
+# Absolute path to the directory that holds PUBLIC media.
+MEDIA_ROOT = "/data/gndata/public/"
