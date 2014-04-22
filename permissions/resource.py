@@ -36,7 +36,6 @@ class BaseGNodeResource(ModelResource):
 
 class ACLResource(ModelResource):
     user = fields.ForeignKey(UserResource, attribute='access_for')
-    level = fields.IntegerField(attribute='access_level', default=1)
 
     class Meta:
         queryset = SingleAccess.objects.all()
@@ -47,6 +46,7 @@ class ACLResource(ModelResource):
             'object_id': ALL,
             'object_type': ALL
         }
+        fields = ['access_level']
 
     def obj_get_list(self, bundle, **kwargs):
         keys = kwargs.keys()
@@ -81,7 +81,7 @@ class PermissionsResourceMixin(Resource):
             return http.HttpMultipleChoices("More than one resource is found at this URI.")
 
         if not obj.owner.pk == request.user.pk:
-            return http.HttpForbidden("No access to the ACL of this object")
+            return http.HttpUnauthorized("No access to the ACL of this object")
 
         if not request.method in ['GET', 'PUT']:
             return http.HttpMethodNotAllowed("Use GET or PUT to manage permissions")
@@ -89,11 +89,15 @@ class PermissionsResourceMixin(Resource):
         acl_resource = ACLResource()
 
         if request.method == 'PUT':
-            users = acl_resource.deserialize(request, request.PUT.data)
-            import ipdb
-            ipdb.set_trace()
+            new_accesses = acl_resource.deserialize(request, request.body)
 
-            obj.share(users)
+            update = {}
+            user_resource = UserResource()
+            for access in new_accesses:
+                clean_user = user_resource.get_via_uri(access['user'])
+                update[clean_user.pk] = access['access_level']
+
+            obj.share(update)
 
         # possible option without resource
         #qs = SingleAccess.objects.filter(**params)
@@ -105,5 +109,10 @@ class PermissionsResourceMixin(Resource):
             'object_type': obj.acl_type
         }
         request_bundle = acl_resource.build_bundle(request=request)
-        data = acl_resource.obj_get_list(request_bundle, **params)
-        return acl_resource.create_response(request, data)
+
+        bundles = []
+        for access in acl_resource.obj_get_list(request_bundle, **params):
+            bundle = acl_resource.build_bundle(obj=access, request=request)
+            bundles.append(acl_resource.full_dehydrate(bundle, for_list=True))
+
+        return acl_resource.create_response(request, bundles)

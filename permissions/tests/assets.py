@@ -18,7 +18,6 @@ class Assets(BaseAssets):
     attr_values = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
 
     def __init__(self):
-        pass
         self.models = [FakeModel, FakeOwnedModel]
 
     def fill(self):
@@ -51,10 +50,9 @@ class Assets(BaseAssets):
 
         params = {
             'object_id': assets['owned'][1].pk,
-            'object_type': 'owned',
+            'object_type': 'fakeownedmodel',
             'access_for': ed,
             'access_level': 1
         }
         SingleAccess.objects.create(**params)
-
         return assets

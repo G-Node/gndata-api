@@ -24,14 +24,11 @@ class BasePermissionsMixin(models.Model):
         """ performs an update of the related ACL.
 
         :param  users   new personal accesses to an object
-        :type   users   [{'user': <user_id>, 'level': <access level>}, ...]
+        :type   users   {'<user_id>': <access_level>, ...}
 
         """
         def validate_user(user_id):
-            try:
-                return User.objects.get(pk=int(user_id))
-            except:
-                raise ValueError("Provided user ID is not valid: %s" % user_id)
+            return User.objects.get(pk=int(user_id))
 
         current_users = [x.access_for for x in self.shared_with]
         users_to_remove = list(set([x.id for x in current_users]) - set(users.keys()))
