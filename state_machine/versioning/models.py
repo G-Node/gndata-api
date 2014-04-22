@@ -31,7 +31,8 @@ class BaseVersionedObject(models.Model):
     guid = models.CharField(max_length=40, editable=False)
     # local ID, invariant between object versions, distinct between objects
     # local ID + starts_at also making a 'real' PK
-    local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
+    #local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
+    local_id = models.CharField(max_length=10, primary_key=True, editable=False)
     date_created = models.DateTimeField(editable=False)
     starts_at = models.DateTimeField(serialize=False, default=timezone.now, editable=False)
     ends_at = models.DateTimeField(serialize=False, blank=True, null=True, editable=False)

@@ -109,7 +109,7 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
                    (new is None and old is not None) or \
                    (old is not None and new is not None and not old.pk == new.pk)
 
-        if self.pk is not None:  # update case
+        if self.pk is not None and self.pk != "":  # update case
             old = self.__class__.objects.get(pk=self.pk)
 
             if obj_has_changed(old.section, self.section):

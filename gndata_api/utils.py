@@ -113,7 +113,7 @@ def get_new_local_id():
     uid = random.choice(alphabet[1:])
     for i in range(9):
         uid += random.choice(alphabet)
-    return base32int(uid)
+    return uid
 
 
 #===============================================================================

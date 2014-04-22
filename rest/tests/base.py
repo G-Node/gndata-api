@@ -55,7 +55,7 @@ class TestApi(TestCase):
         for resource in self.resources:
             obj = self.get_available_objs(resource, self.bob)[0]
             name = resource.Meta.resource_name
-            url = "/api/%s/%s/%d/?format=json" % (self.api_version, name, obj.local_id)
+            url = "/api/%s/%s/%s/?format=json" % (self.api_version, name, obj.local_id)
 
             self.login(self.ed)
 
@@ -98,7 +98,7 @@ class TestApi(TestCase):
             obj = self.get_available_objs(resource, self.bob)[0]
 
             name = resource.Meta.resource_name
-            url = "/api/%s/%s/%d/" % (self.api_version, name, obj.local_id)
+            url = "/api/%s/%s/%s/" % (self.api_version, name, obj.local_id)
 
             res = resource()
             bundle = res.build_bundle(obj=obj)
@@ -126,7 +126,7 @@ class TestApi(TestCase):
         for resource in self.resources:
             obj = self.get_available_objs(resource, self.bob)[0]
             name = resource.Meta.resource_name
-            url = "/api/%s/%s/%d/" % (self.api_version, name, obj.local_id)
+            url = "/api/%s/%s/%s/" % (self.api_version, name, obj.local_id)
 
             self.login(self.ed)
 

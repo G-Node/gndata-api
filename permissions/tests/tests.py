@@ -38,7 +38,7 @@ class TestApi(ResourceTestCase):
     def test_get_acl(self):
         obj = self.assets['owned'][1]  # object is shared via ACL
         name = self.fo_res.Meta.resource_name
-        url = "/api/v1/%s/%d/acl/?format=json" % (name, obj.local_id)
+        url = "/api/v1/%s/%s/acl/?format=json" % (name, obj.local_id)
 
         # this does not proxy user credentials correctly, TODO find out why
         #auth = self.get_auth(self.ed)
@@ -67,7 +67,7 @@ class TestApi(ResourceTestCase):
         }])
         obj = self.assets['owned'][1]  # object is shared via ACL
         name = self.fo_res.Meta.resource_name
-        url = "/api/v1/%s/%d/acl/?format=json" % (name, obj.local_id)
+        url = "/api/v1/%s/%s/acl/?format=json" % (name, obj.local_id)
 
         self.login(self.ed)
         response = self.client.put(url, data, content_type='application/json')

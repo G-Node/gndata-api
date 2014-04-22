@@ -160,7 +160,7 @@ class SingleAccess(models.Model):
         (1, 'Read-only'),
         (2, 'Edit'),
     )
-    object_id = models.BigIntegerField()  # local ID of the shareable object
+    object_id = models.CharField(max_length=10)  # local ID of the shared object
     object_type = models.CharField(max_length=30)
     # the pair above identifies a unique object for ACL record
     access_for = models.ForeignKey(User)  # with whom it is shared
