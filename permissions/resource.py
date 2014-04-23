@@ -1,46 +1,15 @@
 from django.conf.urls import url
-from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.http import HttpResponse
 from tastypie.resources import Resource, ModelResource
 from tastypie.utils import trailing_slash
-from tastypie import http, fields
+from tastypie import fields
 from tastypie.authentication import SessionAuthentication
-from tastypie.resources import ALL, ALL_WITH_RELATIONS
+from tastypie.resources import ALL
 
-from permissions.authorization import ACLManageAuthorization, BaseAuthorization
+from permissions.authorization import ACLManageAuthorization
 from permissions.models import SingleAccess
 from account.api import UserResource
-
-
-class BaseMeta:
-    excludes = ['starts_at', 'ends_at']
-    authentication = SessionAuthentication()
-    authorization = BaseAuthorization()
-    filtering = {
-        'local_id': ALL,
-        'owner': ALL_WITH_RELATIONS
-    }
-
-
-class BaseGNodeResource(ModelResource):
-
-    owner = fields.ForeignKey(UserResource, 'owner')
-
-    def get_schema(self, request, **kwargs):
-        """
-        Returns a serialized form of the schema of the resource.
-
-        This method is overloaded as the superclass method uses dummy (empty)
-        object together with the 'authorized_read_detail' method to check for
-        access to the schema, which fails as the owner for the empty object is
-        obviously not set.
-
-        Should return a HttpResponse (200 OK).
-        """
-        self.method_check(request, allowed=['get'])
-        self.is_authenticated(request)
-        self.throttle_check(request)
-        self.log_throttled_access(request)
-        return self.create_response(request, self.build_schema())
+from rest.resource import get_object_or_response
 
 
 class ACLResource(ModelResource):
@@ -79,21 +48,10 @@ class PermissionsResourceMixin(Resource):
         ]
 
     def process_permissions(self, request, **kwargs):
-        try:
-            bundle = self.build_bundle(data={'pk': kwargs['pk']}, request=request)
-            obj = self.cached_obj_get(bundle=bundle, **self.remove_api_resource_names(kwargs))
-
-        except ObjectDoesNotExist:
-            return http.HttpGone()
-
-        except MultipleObjectsReturned:
-            return http.HttpMultipleChoices("More than one resource is found at this URI.")
-
-        if not obj.owner.pk == request.user.pk:
-            return http.HttpUnauthorized("No access to the ACL of this object")
-
-        if not request.method in ['GET', 'PUT']:
-            return http.HttpMethodNotAllowed("Use GET or PUT to manage permissions")
+        pk = kwargs.pop('pk')
+        obj = get_object_or_response(self, request, pk, **kwargs)
+        if isinstance(obj, HttpResponse):
+            return obj
 
         acl_resource = ACLResource()
 

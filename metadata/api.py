@@ -2,9 +2,9 @@ from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
 from tastypie.authentication import SessionAuthentication
 from permissions.authorization import BaseAuthorization
-from permissions.resource import BaseGNodeResource
 
 from metadata.models import Document, Section, Property, Value
+from rest.resource import BaseGNodeResource
 
 
 class DocumentResource(BaseGNodeResource):

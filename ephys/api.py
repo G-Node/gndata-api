@@ -1,8 +1,9 @@
+from django.conf.urls import url
 from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
-from permissions.resource import BaseGNodeResource, BaseMeta
-
+from tastypie.utils import trailing_slash
 from ephys.models import *
+from rest.resource import BaseMeta, BaseGNodeResource, process_file
 
 
 class BlockResource(BaseGNodeResource):
@@ -168,6 +169,21 @@ class AnalogSignalResource(BaseGNodeResource):
     class Meta(BaseMeta):
         queryset = AnalogSignal.objects.all()
         resource_name = AnalogSignal.__name__.lower()
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/(?P<attr_name>\w[\w/-]*)%s$" % \
+                (self._meta.resource_name, trailing_slash()),
+                self.wrap_view('signal_data'),
+                name="api_signal_data"
+            )
+        ]
+
+    def signal_data(self, request, **kwargs):
+        pk = kwargs.pop('pk')
+        attr_name = kwargs.pop('attr_name')
+        return process_file(self, request, pk, attr_name, **kwargs)
 
 
 class IRSAResource(BaseGNodeResource):
