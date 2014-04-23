@@ -5,6 +5,7 @@ admin.autodiscover()
 
 from tastypie.api import Api
 from metadata.api import *
+from ephys.api import *
 from account.api import UserResource
 
 v1_api = Api(api_name='v1')
@@ -12,6 +13,7 @@ v1_api.register(DocumentResource())
 v1_api.register(SectionResource())
 v1_api.register(PropertyResource())
 v1_api.register(ValueResource())
+v1_api.register(BlockResource())
 v1_api.register(UserResource())
 
 if True:  # FIXME add condition only if in test

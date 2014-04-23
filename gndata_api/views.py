@@ -4,7 +4,7 @@ from django.template import RequestContext
 from django.utils import six
 
 from metadata.api import *
-from gndata_api.utils import base32int
+from ephys.api import *
 
 import simplejson as json
 
@@ -13,7 +13,8 @@ RESOURCES = {
     'document': DocumentResource,
     'section': SectionResource,
     'property': PropertyResource,
-    'value': ValueResource
+    'value': ValueResource,
+    'block': BlockResource
 }
 
 
@@ -55,7 +56,7 @@ def detail_view(request, resource_type, id):
 
     res = RESOURCES[resource_type]()
     request_bundle = res.build_bundle(request=request)
-    obj = res.obj_get(request_bundle, pk=base32int(id))
+    obj = res.obj_get(request_bundle, pk=id)
 
     bundle = res.build_bundle(obj=obj, request=request)
     res.full_dehydrate(bundle, for_list=True)

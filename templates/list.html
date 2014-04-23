@@ -18,7 +18,7 @@
                 <td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a></td>
                 <td><a href="{{ obj.owner.get_absolute_url }}">{{ obj.owner.username }}</a></td>
                 <td>{{ obj.date_created }}</td>
-                <td><a href="{{ obj.get_absolute_url }}">{{ obj.local_id_as_str }}</a></td>
+                <td><a href="{{ obj.get_absolute_url }}">{{ obj.local_id }}</a></td>
             </tr>
         {% endfor %}
         </tbody>

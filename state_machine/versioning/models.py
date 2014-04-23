@@ -69,11 +69,6 @@ class BaseVersionedObject(models.Model):
         self.__class__.objects.bulk_create([self])
 
     @property
-    def local_id_as_str(self):
-        """ base32hex string representation of an ID """
-        return base32str(self.local_id)
-
-    @property
     def get_type(self):
         """ every object has a type defined as lowercase name of the class. """
         return self.__class__.__name__.lower()
@@ -87,7 +82,7 @@ class BaseVersionedObject(models.Model):
 
     def get_absolute_url(self):
         """ by default this should be similar to that """
-        return ''.join(['/', self.get_type, '/', self.local_id_as_str, '/'])
+        return ''.join(['/', self.get_type, '/', self.local_id, '/'])
 
     def is_active(self):
         return not self.ends_at
