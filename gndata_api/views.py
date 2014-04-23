@@ -14,7 +14,20 @@ RESOURCES = {
     'section': SectionResource,
     'property': PropertyResource,
     'value': ValueResource,
-    'block': BlockResource
+    'block': BlockResource,
+    'segment': SegmentResource,
+    'eventarray': EventArrayResource,
+    'event': EventResource,
+    'epocharray': EpochArrayResource,
+    'epoch': EpochResource,
+    'recordingchannelgroup': RCGResource,
+    'recordingchannel': RCResource,
+    'unit': UnitResource,
+    'spiketrain': SpikeTrainResource,
+    'analogsignalarray': ASAResource,
+    'analogsignal': AnalogSignalResource,
+    'irregularlysampledsignal': IRSAResource,
+    'spike': SpikeResource,
 }
 
 

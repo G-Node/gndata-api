@@ -35,7 +35,7 @@ class BlockBasedPermissionsMixin(BasePermissionsMixin):
                 object_type='block'
             )
             dir_acc = [sa.object_id for sa in direct_shares]
-            q2 = queryset.filter(document_id__in=dir_acc)
+            q2 = queryset.filter(block_id__in=dir_acc)
 
             perm_filtered = q1 | q2
 
@@ -49,7 +49,7 @@ class BlockBasedPermissionsMixin(BasePermissionsMixin):
             dir_acc = [sa.object_id for sa in direct_shares]
 
             # not to damage QuerySet
-            perm_filtered = queryset.filter(document_id__in=dir_acc)
+            perm_filtered = queryset.filter(block_id__in=dir_acc)
 
         # owned objects always available
         return perm_filtered | queryset.filter(owner=user.id)

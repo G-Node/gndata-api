@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from django.views.generic.base import RedirectView, TemplateView
+from django.views.generic.base import RedirectView
 from django.contrib import admin
 admin.autodiscover()
 
@@ -8,13 +8,19 @@ from metadata.api import *
 from ephys.api import *
 from account.api import UserResource
 
+# instantiate resources right there
+metadata_resources = [DocumentResource(), SectionResource(), PropertyResource(),
+                      ValueResource()]
+
+ephys_resources = [BlockResource(), SegmentResource(), EventArrayResource(),
+                   EventResource(), EpochArrayResource(), EpochResource(),
+                   RCGResource(), RCResource(), UnitResource(),
+                   SpikeTrainResource(), ASAResource(), AnalogSignalResource(),
+                   IRSAResource(), SpikeResource()]
+
 v1_api = Api(api_name='v1')
-v1_api.register(DocumentResource())
-v1_api.register(SectionResource())
-v1_api.register(PropertyResource())
-v1_api.register(ValueResource())
-v1_api.register(BlockResource())
-v1_api.register(UserResource())
+for resource in metadata_resources + ephys_resources + [UserResource()]:
+    v1_api.register(resource)
 
 if True:  # FIXME add condition only if in test
     from permissions.tests.fake import FakeResource, FakeOwnedResource

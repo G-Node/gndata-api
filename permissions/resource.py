@@ -3,13 +3,22 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from tastypie.resources import Resource, ModelResource
 from tastypie.utils import trailing_slash
 from tastypie import http, fields
-from tastypie import fields
 from tastypie.authentication import SessionAuthentication
-from tastypie.resources import ALL
+from tastypie.resources import ALL, ALL_WITH_RELATIONS
 
-from permissions.authorization import ACLManageAuthorization
+from permissions.authorization import ACLManageAuthorization, BaseAuthorization
 from permissions.models import SingleAccess
 from account.api import UserResource
+
+
+class BaseMeta:
+    excludes = ['starts_at', 'ends_at']
+    authentication = SessionAuthentication()
+    authorization = BaseAuthorization()
+    filtering = {
+        'local_id': ALL,
+        'owner': ALL_WITH_RELATIONS
+    }
 
 
 class BaseGNodeResource(ModelResource):
