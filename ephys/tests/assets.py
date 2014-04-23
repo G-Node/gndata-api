@@ -113,7 +113,7 @@ class Assets(BaseAssets):
         for i in range(4):
             parent = assets['segment'][0] if i < 2 else assets['segment'][1]
             params = {
-                'name': "SUA-LFP-unit %d" % (i + 1),
+                'name': "Event array %d" % (i + 1),
                 'labels': self.make_dummy_file(parent),
                 'times': self.make_dummy_file(parent),
                 'times__unit': 'ms',
@@ -122,3 +122,148 @@ class Assets(BaseAssets):
             }
             obj = EventArray.objects.create(**params)
             assets["eventarray"].append(obj)
+
+        # events
+        for i in range(4):
+            parent = assets['segment'][0] if i < 2 else assets['segment'][1]
+            params = {
+                'name': "Event %d" % (i + 1),
+                'label': "Event label %d" % (i + 1),
+                'time': 1.56,
+                'time__unit': 'ms',
+                'segment': parent,
+                'owner': bob
+            }
+            obj = Event.objects.create(**params)
+            assets["event"].append(obj)
+
+        # epoch arrays
+        for i in range(4):
+            parent = assets['segment'][0] if i < 2 else assets['segment'][1]
+            params = {
+                'name': "Epoch array %d" % (i + 1),
+                'labels': self.make_dummy_file(parent),
+                'times': self.make_dummy_file(parent),
+                'times__unit': 'ms',
+                'durations': self.make_dummy_file(parent),
+                'durations__unit': 'ms',
+                'segment': parent,
+                'owner': bob
+            }
+            obj = EpochArray.objects.create(**params)
+            assets["epocharray"].append(obj)
+
+        # epochs
+        for i in range(4):
+            parent = assets['segment'][0] if i < 2 else assets['segment'][1]
+            params = {
+                'name': "Epoch %d" % (i + 1),
+                'label': "Epoch label %d" % (i + 1),
+                'time': 1.56,
+                'time__unit': 'ms',
+                'duration': 5.23,
+                'duration__unit': 'ms',
+                'segment': parent,
+                'owner': bob
+            }
+            obj = Epoch.objects.create(**params)
+            assets["epoch"].append(obj)
+
+        # spike trains
+        for i in range(4):
+            segment = assets['segment'][0] if i < 2 else assets['segment'][1]
+            unit = assets['unit'][0] if i < 2 else assets['unit'][1]
+            params = {
+                'name': "Spiketrain %d" % (i + 1),
+                't_start': 1.56,
+                't_start__unit': 'ms',
+                't_stop': 5.23,
+                't_stop__unit': 'ms',
+                'times': self.make_dummy_file(segment),
+                'times__unit': 'ms',
+                'segment': segment,
+                'unit': unit,
+                'owner': bob
+            }
+            obj = SpikeTrain.objects.create(**params)
+            assets["spiketrain"].append(obj)
+
+        # analog signal arrays
+        for i in range(4):
+            segment = assets['segment'][0] if i < 2 else assets['segment'][1]
+            rcg = assets['rcg'][0] if i < 3 else assets['rcg'][1]
+            params = {
+                'name': "ASA %d" % (i + 1),
+                't_start': 1.56,
+                't_start__unit': 'ms',
+                'sampling_rate': 10000.0,
+                'sampling_rate__unit': 'Hz',
+                'signal': self.make_dummy_file(segment),
+                'signal__unit': 'mV',
+                'segment': segment,
+                'recordingchannelgroup': rcg,
+                'owner': bob
+            }
+            obj = AnalogSignalArray.objects.create(**params)
+            assets["analogsignalarray"].append(obj)
+
+        # analog signals
+        for i in range(4):
+            segment = assets['segment'][0] if i < 2 else assets['segment'][1]
+            rc = assets['rc'][0] if i < 3 else assets['rc'][1]
+            params = {
+                'name': "Analog signal %d" % (i + 1),
+                't_start': 1.56,
+                't_start__unit': 'ms',
+                'sampling_rate': 10000.0,
+                'sampling_rate__unit': 'Hz',
+                'signal': self.make_dummy_file(segment),
+                'signal__unit': 'mV',
+                'segment': segment,
+                'recordingchannel': rc,
+                'owner': bob
+            }
+            obj = AnalogSignal.objects.create(**params)
+            assets["analogsignal"].append(obj)
+
+        # irsa-s
+        for i in range(4):
+            segment = assets['segment'][0] if i < 2 else assets['segment'][1]
+            rc = assets['rc'][0] if i < 3 else assets['rc'][1]
+            params = {
+                'name': "Irregular signal %d" % (i + 1),
+                't_start': 1.56,
+                't_start__unit': 'ms',
+                'signal': self.make_dummy_file(segment),
+                'signal__unit': 'mV',
+                'times': self.make_dummy_file(segment),
+                'times__unit': 'ms',
+                'segment': segment,
+                'recordingchannel': rc,
+                'owner': bob
+            }
+            obj = IrregularlySampledSignal.objects.create(**params)
+            assets["irsa"].append(obj)
+
+        # spikes
+        for i in range(4):
+            segment = assets['segment'][0] if i < 2 else assets['segment'][1]
+            unit = assets['unit'][0] if i < 2 else assets['unit'][1]
+            params = {
+                'name': "Irregular signal %d" % (i + 1),
+                'time': 1.56,
+                'time__unit': 'ms',
+                'sampling_rate': 10000.0,
+                'sampling_rate__unit': 'Hz',
+                'left_sweep': 1.56,
+                'left_sweep__unit': 'ms',
+                'waveform': self.make_dummy_file(segment),
+                'waveform__unit': 'mV',
+                'segment': segment,
+                'unit': unit,
+                'owner': bob
+            }
+            obj = Spike.objects.create(**params)
+            assets["spike"].append(obj)
+
+        return assets

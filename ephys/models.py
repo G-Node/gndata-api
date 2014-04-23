@@ -1,10 +1,12 @@
 from django.db import models
+from django.core.files import storage
 from state_machine.models import BaseGnodeObject
 from state_machine.versioning.models import VersionedM2M
-from ephys.security import BlockBasedPermissionsMixin
-from permissions.models import BasePermissionsMixin
 from state_machine.versioning.descriptors import VersionedForeignKey
+from ephys.security import BlockBasedPermissionsMixin
 from ephys.fields import TimeUnitField, SignalUnitField, SamplingUnitField
+from permissions.models import BasePermissionsMixin
+from gndata_api import settings
 
 # TODO implement proper slicing
 
@@ -17,6 +19,7 @@ def make_upload_path(self, filename):
     """ Generates upload path for FileField """
     return "%s/%s" % (self.owner.username, filename)
 
+fs = storage.FileSystemStorage(location=settings.FILE_MEDIA_ROOT)
 
 DEFAULTS = {
     "name_max_length": 100,
@@ -120,8 +123,8 @@ class EventArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     name = models.CharField(max_length=DEFAULTS['name_max_length'], blank=True, null=True)
 
     # NEO data arrays
-    labels = models.FileField(upload_to=make_upload_path, blank=True, null=True)
-    times = models.FileField(upload_to=make_upload_path)
+    labels = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
+    times = models.FileField(storage=fs, upload_to=make_upload_path)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO relationships
@@ -159,10 +162,10 @@ class EpochArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     name = models.CharField(max_length=DEFAULTS['name_max_length'], blank=True, null=True)
 
     # NEO data arrays
-    labels = models.FileField(upload_to=make_upload_path, blank=True, null=True)
-    times = models.FileField(upload_to=make_upload_path)
+    labels = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
+    times = models.FileField(storage=fs, upload_to=make_upload_path)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
-    durations = models.FileField(upload_to=make_upload_path)
+    durations = models.FileField(storage=fs, upload_to=make_upload_path)
     durations__unit = TimeUnitField('durations__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO relationships
@@ -250,9 +253,9 @@ class SpikeTrain(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     unit = VersionedForeignKey(Unit, blank=True, null=True)
 
     # NEO data arrays
-    times = models.FileField(upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
-    waveforms = models.FileField(upload_to=make_upload_path, blank=True, null=True)
+    waveforms = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     waveforms__unit = SignalUnitField('waveforms__unit', blank=True, null=True)
 
     # rewrite the size property when waveforms are supported
@@ -277,7 +280,7 @@ class AnalogSignalArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     t_start__unit = TimeUnitField('t_start__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO data arrays
-    signal = models.FileField(upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path)
     signal__unit = SignalUnitField('signals__unit', default=DEFAULTS['default_data_unit'])
 
     # NEO relationships
@@ -309,7 +312,7 @@ class AnalogSignal(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     recordingchannel = VersionedForeignKey(RecordingChannel, blank=True, null=True)
     
     # NEO data arrays
-    signal = models.FileField(upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path)
     signal__unit = SignalUnitField('signal__unit', default=DEFAULTS['default_data_unit'])
 
     def save(self, *args, **kwargs):
@@ -332,9 +335,9 @@ class IrregularlySampledSignal(BlockBasedPermissionsMixin, BaseInfo, DataObject)
     recordingchannel = VersionedForeignKey(RecordingChannel, blank=True, null=True)
 
     # NEO data arrays
-    signal = models.FileField(upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path)
     signal__unit = SignalUnitField('signal__unit', default=DEFAULTS['default_data_unit'])
-    times = models.FileField(upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
 
     def full_clean(self, *args, **kwargs):
@@ -362,7 +365,7 @@ class Spike(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     left_sweep__unit = TimeUnitField('left_sweep__unit', blank=True, null=True)
 
     # NEO data arrays
-    waveform = models.FileField(upload_to=make_upload_path, blank=True, null=True)
+    waveform = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     waveform__unit = SignalUnitField('waveform__unit', default=DEFAULTS['default_data_unit'])
 
     # NEO relationships
