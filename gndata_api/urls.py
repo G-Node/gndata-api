@@ -8,25 +8,26 @@ from metadata.api import *
 from ephys.api import *
 from account.api import UserResource
 
+# API initialization -----------------------------------------------------------
+
 # instantiate resources right there
-metadata_resources = [DocumentResource(), SectionResource(), PropertyResource(),
-                      ValueResource()]
+metadata_resources = [
+    DocumentResource(), SectionResource(), PropertyResource(), ValueResource()
+]
 
-ephys_resources = [BlockResource(), SegmentResource(), EventArrayResource(),
-                   EventResource(), EpochArrayResource(), EpochResource(),
-                   RCGResource(), RCResource(), UnitResource(),
-                   SpikeTrainResource(), ASAResource(), AnalogSignalResource(),
-                   IRSAResource(), SpikeResource()]
+ephys_resources = [
+    BlockResource(), SegmentResource(), EventArrayResource(), EventResource(),
+    EpochArrayResource(), EpochResource(), RCGResource(), RCResource(),
+    UnitResource(), SpikeTrainResource(), ASAResource(), AnalogSignalResource(),
+    IRSAResource(), SpikeResource()
+]
 
+# register all resources
 v1_api = Api(api_name='v1')
 for resource in metadata_resources + ephys_resources + [UserResource()]:
     v1_api.register(resource)
 
-if True:  # FIXME add condition only if in test
-    from permissions.tests.fake import FakeResource, FakeOwnedResource
-    v1_api.register(FakeResource())
-    v1_api.register(FakeOwnedResource())
-
+# Normal URLs ------------------------------------------------------------------
 
 urlpatterns = patterns('',
     # Examples:

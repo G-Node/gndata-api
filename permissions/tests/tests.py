@@ -13,6 +13,7 @@ class TestApi(ResourceTestCase):
     """
 
     fixtures = ["users.json"]
+    urls = 'permissions.tests.urls'
 
     def setUp(self):
         super(TestApi, self).setUp()
