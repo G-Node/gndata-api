@@ -19,6 +19,7 @@ class BaseMeta:
     excludes = ['starts_at', 'ends_at']
     authentication = SessionAuthentication()
     authorization = BaseAuthorization()
+    collection_name = 'selected'
     filtering = {
         'local_id': ALL,
         'date_created': ALL,

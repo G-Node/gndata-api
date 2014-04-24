@@ -2,9 +2,10 @@ from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
 from ephys.models import *
 from rest.resource import BaseMeta, BaseGNodeResource, BaseFileResourceMixin
+from permissions.resource import PermissionsResourceMixin
 
 
-class BlockResource(BaseGNodeResource):
+class BlockResource(BaseGNodeResource, PermissionsResourceMixin):
     block_set = fields.ToManyField(
         'ephys.api.SegmentResource', 'segment_set', related_name='block',
         full=False, blank=True, null=True

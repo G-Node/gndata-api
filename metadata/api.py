@@ -1,13 +1,12 @@
 from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
-from tastypie.authentication import SessionAuthentication
-from permissions.authorization import BaseAuthorization
 
 from metadata.models import Document, Section, Property, Value
-from rest.resource import BaseGNodeResource
+from rest.resource import BaseGNodeResource, BaseMeta
+from permissions.resource import PermissionsResourceMixin
 
 
-class DocumentResource(BaseGNodeResource):
+class DocumentResource(BaseGNodeResource, PermissionsResourceMixin):
     section_set = fields.ToManyField(
         'metadata.api.SectionResource', attribute=lambda bundle:
         Section.objects.filter(document=bundle.obj, section__isnull=True),
@@ -15,19 +14,18 @@ class DocumentResource(BaseGNodeResource):
         full=False, blank=True, null=True
     )
 
-    class Meta:
+    class Meta(BaseMeta):
         queryset = Document.objects.all()
         resource_name = 'document'
-        excludes = ['starts_at', 'ends_at']
         filtering = {
             'author': ALL,
             'date': ALL,
             'version': ALL,
             'repository': ALL,
-            'owner': ALL_WITH_RELATIONS
+            'owner': ALL_WITH_RELATIONS,
+            'local_id': ALL,
+            'date_created': ALL
         }
-        authentication = SessionAuthentication()
-        authorization = BaseAuthorization()
 
 
 class SectionResource(BaseGNodeResource):
@@ -42,10 +40,9 @@ class SectionResource(BaseGNodeResource):
         full=False, blank=True, null=True
     )
 
-    class Meta:
+    class Meta(BaseMeta):
         queryset = Section.objects.all()
         resource_name = 'section'
-        excludes = ['starts_at', 'ends_at']
         filtering = {
             'local_id': ALL,
             'name': ALL,
@@ -57,10 +54,9 @@ class SectionResource(BaseGNodeResource):
             'repository': ALL,
             'mapping': ALL,
             'section': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS
+            'owner': ALL_WITH_RELATIONS,
+            'date_created': ALL
         }
-        authentication = SessionAuthentication()
-        authorization = BaseAuthorization()
 
 
 class PropertyResource(BaseGNodeResource):
@@ -70,7 +66,7 @@ class PropertyResource(BaseGNodeResource):
         full=False, blank=True, null=True
     )
 
-    class Meta:
+    class Meta(BaseMeta):
         queryset = Property.objects.all()
         resource_name = 'property'
         excludes = ['starts_at', 'ends_at', 'document']
@@ -81,10 +77,10 @@ class PropertyResource(BaseGNodeResource):
             'dependency': ALL,
             'dependencyvalue': ALL,
             'section': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS
+            'owner': ALL_WITH_RELATIONS,
+            'local_id': ALL,
+            'date_created': ALL
         }
-        authentication = SessionAuthentication()
-        authorization = BaseAuthorization()
 
 
 class ValueResource(BaseGNodeResource):
@@ -103,7 +99,7 @@ class ValueResource(BaseGNodeResource):
             'encoder': ALL,
             'checksum': ALL,
             'property': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS
+            'owner': ALL_WITH_RELATIONS,
+            'local_id': ALL,
+            'date_created': ALL
         }
-        authentication = SessionAuthentication()
-        authorization = BaseAuthorization()

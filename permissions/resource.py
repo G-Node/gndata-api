@@ -19,6 +19,7 @@ class ACLResource(ModelResource):
         resource_name = 'acl'
         authentication = SessionAuthentication()
         authorization = ACLManageAuthorization()
+        include_resource_uri = False
         filtering = {
             'object_id': ALL,
             'object_type': ALL
