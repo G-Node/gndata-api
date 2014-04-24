@@ -1,15 +1,14 @@
 from django.conf.urls import url
-from django.http import HttpResponse
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from tastypie.resources import Resource, ModelResource
 from tastypie.utils import trailing_slash
-from tastypie import fields
+from tastypie import fields, http
 from tastypie.authentication import SessionAuthentication
 from tastypie.resources import ALL
 
 from permissions.authorization import ACLManageAuthorization
 from permissions.models import SingleAccess
 from account.api import UserResource
-from rest.resource import get_object_or_response
 
 
 class ACLResource(ModelResource):
@@ -48,10 +47,21 @@ class PermissionsResourceMixin(Resource):
         ]
 
     def process_permissions(self, request, **kwargs):
-        pk = kwargs.pop('pk')
-        obj = get_object_or_response(self, request, pk, **kwargs)
-        if isinstance(obj, HttpResponse):
-            return obj
+        try:
+            bundle = self.build_bundle(data={'pk': kwargs['pk']}, request=request)
+            obj = self.cached_obj_get(bundle=bundle, **self.remove_api_resource_names(kwargs))
+
+        except ObjectDoesNotExist:
+            return http.HttpGone()
+
+        except MultipleObjectsReturned:
+            return http.HttpMultipleChoices("More than one resource is found at this URI.")
+
+        if not obj.owner.pk == request.user.pk:
+            return http.HttpUnauthorized("No access to the ACL of this object")
+
+        if not request.method in ['GET', 'PUT']:
+            return http.HttpMethodNotAllowed("Use GET or PUT to manage permissions")
 
         acl_resource = ACLResource()
 

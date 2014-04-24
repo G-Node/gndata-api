@@ -250,7 +250,7 @@ class Assets(BaseAssets):
             segment = assets['segment'][0] if i < 2 else assets['segment'][1]
             unit = assets['unit'][0] if i < 2 else assets['unit'][1]
             params = {
-                'name': "Irregular signal %d" % (i + 1),
+                'name': "Spike waveform %d" % (i + 1),
                 'time': 1.56,
                 'time__unit': 'ms',
                 'sampling_rate': 10000.0,

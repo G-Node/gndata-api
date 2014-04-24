@@ -1,9 +1,7 @@
-from django.conf.urls import url
 from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
-from tastypie.utils import trailing_slash
 from ephys.models import *
-from rest.resource import BaseMeta, BaseGNodeResource, process_file
+from rest.resource import BaseMeta, BaseGNodeResource, BaseFileResourceMixin
 
 
 class BlockResource(BaseGNodeResource):
@@ -14,7 +12,7 @@ class BlockResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Block.objects.all()
-        resource_name = 'block'  # Block.__name__.lower()
+        resource_name = Block.__name__.lower()
 
 
 class SegmentResource(BaseGNodeResource):
@@ -61,7 +59,7 @@ class SegmentResource(BaseGNodeResource):
         resource_name = Segment.__name__.lower()
 
 
-class EventArrayResource(BaseGNodeResource):
+class EventArrayResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
 
     class Meta(BaseMeta):
@@ -77,7 +75,7 @@ class EventResource(BaseGNodeResource):
         resource_name = Event.__name__.lower()
 
 
-class EpochArrayResource(BaseGNodeResource):
+class EpochArrayResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
 
     class Meta(BaseMeta):
@@ -110,9 +108,9 @@ class RCGResource(BaseGNodeResource):
 
 
 class RCResource(BaseGNodeResource):
-    recordingchannelgroup_set = fields.ToManyField(
-        'metadata.api.RCGResource', 'recordingchannelgroup_set',
-        related_name='recordingchannel_set', full=False, blank=True, null=True
+    recordingchannelgroup = fields.ToManyField(
+        'metadata.api.RCGResource', 'recordingchannelgroup',
+        related_name='recordingchannel', full=False, blank=True, null=True
     )
     analogsignal_set = fields.ToManyField(
         'ephys.api.AnalogSignalResource', 'analogsignal_set',
@@ -144,7 +142,7 @@ class UnitResource(BaseGNodeResource):
         resource_name = Unit.__name__.lower()
 
 
-class SpikeTrainResource(BaseGNodeResource):
+class SpikeTrainResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
     unit = fields.ToOneField(UnitResource, 'unit')
 
@@ -153,7 +151,7 @@ class SpikeTrainResource(BaseGNodeResource):
         resource_name = SpikeTrain.__name__.lower()
 
 
-class ASAResource(BaseGNodeResource):
+class ASAResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
     recordingchannelgroup = fields.ToOneField(RCGResource, 'recordingchannelgroup')
 
@@ -162,7 +160,7 @@ class ASAResource(BaseGNodeResource):
         resource_name = AnalogSignalArray.__name__.lower()
 
 
-class AnalogSignalResource(BaseGNodeResource):
+class AnalogSignalResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
     recordingchannel = fields.ToOneField(RCResource, 'recordingchannel')
 
@@ -170,23 +168,8 @@ class AnalogSignalResource(BaseGNodeResource):
         queryset = AnalogSignal.objects.all()
         resource_name = AnalogSignal.__name__.lower()
 
-    def prepend_urls(self):
-        return [
-            url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/(?P<attr_name>\w[\w/-]*)%s$" % \
-                (self._meta.resource_name, trailing_slash()),
-                self.wrap_view('signal_data'),
-                name="api_signal_data"
-            )
-        ]
 
-    def signal_data(self, request, **kwargs):
-        pk = kwargs.pop('pk')
-        attr_name = kwargs.pop('attr_name')
-        return process_file(self, request, pk, attr_name, **kwargs)
-
-
-class IRSAResource(BaseGNodeResource):
+class IRSAResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
     recordingchannel = fields.ToOneField(RCResource, 'recordingchannel')
 
@@ -195,7 +178,7 @@ class IRSAResource(BaseGNodeResource):
         resource_name = IrregularlySampledSignal.__name__.lower()
 
 
-class SpikeResource(BaseGNodeResource):
+class SpikeResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
     unit = fields.ToOneField(UnitResource, 'unit')
 
