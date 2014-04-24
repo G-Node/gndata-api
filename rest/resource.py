@@ -37,15 +37,21 @@ class BaseGNodeResource(ModelResource):
     def dehydrate(self, bundle):
         """ tastypie does not (?) support full URLs having hostname etc. This is
         a hack to make full URLs with http:// etc. """
+        def extend_if_url(sample):
+            if sample.startswith('/api/'):
+                return urlparse.urljoin(base, sample)
+            return sample
+
         prefix = bundle.request.is_secure() and 'https' or 'http'
         base = '%s://%s' % (prefix, bundle.request.get_host())
 
         fresh_bundle = super(BaseGNodeResource, self).dehydrate(bundle)
         for k, v in fresh_bundle.data.items():
-            if not isinstance(v, str) or v is None:
-                continue
-            if v.startswith('/api/'):
-                fresh_bundle.data[k] = urlparse.urljoin(base, v)
+            if isinstance(v, str):
+                fresh_bundle.data[k] = extend_if_url(v)
+
+            elif isinstance(v, list):
+                fresh_bundle.data[k] = [extend_if_url(x) for x in v]
 
         return fresh_bundle
 
