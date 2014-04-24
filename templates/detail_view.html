@@ -32,7 +32,13 @@
         <!-- Main object attributes -->
         <ul class="list-group">
         {% for key, value in normal_fields.items %}
-            <li class="list-group-item"><span class="badge">{{ key }}</span>{{ value }}</li>
+            <li class="list-group-item"><span class="badge">{{ key }}</span>
+                {% ifequal value|slice:":4" "http" %}
+                    <a href="{{ value }}">{{ value }}</a>
+                {% else %}
+                    {{ value }}
+                {% endifequal %}
+            </li>
         {% endfor %}
         </ul>
 
