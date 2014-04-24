@@ -21,18 +21,21 @@ class BaseMeta:
     authorization = BaseAuthorization()
     filtering = {
         'local_id': ALL,
+        'date_created': ALL,
         'owner': ALL_WITH_RELATIONS
     }
 
 
 class BaseGNodeResource(ModelResource):
 
-    owner = fields.ForeignKey(UserResource, 'owner')
+    owner = fields.ForeignKey(UserResource, 'owner', readonly=True)
+    date_created = fields.DateTimeField(attribute='date_created', readonly=True)
+    guid = fields.CharField(attribute='guid', readonly=True)
+    local_id = fields.CharField(attribute='local_id', readonly=True)
 
     def dehydrate(self, bundle):
         """ tastypie does not (?) support full URLs having hostname etc. This is
         a hack to make full URLs with http:// etc. """
-
         prefix = bundle.request.is_secure() and 'https' or 'http'
         base = '%s://%s' % (prefix, bundle.request.get_host())
 
