@@ -54,11 +54,11 @@ class TestApi(ResourceTestCase):
 
             if meta['type'] == 'related':
                 if meta['related_type'] == 'to_one':  # ignore to_many for now
-                    dummy[name] = random.choice(
-                        self.get_available_objs(
-                            getattr(resource, name).to_class, user
-                        )
-                    ).pk
+                    available = self.get_available_objs(
+                        getattr(resource, name).to_class, user
+                    )
+                    if len(available) > 0:
+                        dummy[name] = random.choice(available).pk
 
                 elif meta['related_type'] == 'to_many' and \
                                 name == 'recordingchannelgroup':

@@ -3,6 +3,7 @@ from django.core.files import storage
 from state_machine.models import BaseGnodeObject
 from state_machine.versioning.models import VersionedM2M
 from state_machine.versioning.descriptors import VersionedForeignKey
+from metadata.models import Section
 from ephys.security import BlockBasedPermissionsMixin
 from ephys.fields import TimeUnitField, SignalUnitField, SamplingUnitField
 from permissions.models import BasePermissionsMixin
@@ -42,6 +43,7 @@ class Block(BasePermissionsMixin, BaseGnodeObject):
     description = models.CharField(max_length=1024, blank=True, null=True)
     filedatetime = models.DateTimeField(null=True, blank=True)
     index = models.IntegerField(null=True, blank=True)
+    metadata = VersionedForeignKey(Section, null=True, blank=True)
 
     @property
     def size(self):
@@ -56,6 +58,7 @@ class BaseInfo(BaseGnodeObject):
 
     # block reference is used to determine access to an object
     block = VersionedForeignKey(Block)
+    metadata = VersionedForeignKey(Section, null=True, blank=True)
     description = models.CharField(max_length=1024, blank=True, null=True)
 
     class Meta:
