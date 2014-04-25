@@ -12,14 +12,14 @@ from account.api import UserResource
 
 # instantiate resources right there
 metadata_resources = [
-    DocumentResource(), SectionResource(), PropertyResource(), ValueResource()
+    ValueResource(), PropertyResource(), SectionResource(), DocumentResource()
 ]
 
 ephys_resources = [
-    BlockResource(), SegmentResource(), EventArrayResource(), EventResource(),
-    EpochArrayResource(), EpochResource(), RCGResource(), RCResource(),
-    UnitResource(), SpikeTrainResource(), ASAResource(), AnalogSignalResource(),
-    IRSAResource(), SpikeResource()
+    EventArrayResource(), EventResource(), EpochArrayResource(),
+    EpochResource(), SpikeTrainResource(), ASAResource(),
+    AnalogSignalResource(), IRSAResource(), SpikeResource(), SegmentResource(),
+    UnitResource(), RCResource(), RCGResource(), BlockResource()
 ]
 
 # register all resources

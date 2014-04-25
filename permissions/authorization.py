@@ -59,7 +59,7 @@ class BaseAuthorization(Authorization):
         return object_list
 
     def create_detail(self, object_list, bundle):
-        return bundle.obj.owner == bundle.request.user
+        return True
 
     def update_list(self, object_list, bundle):
         return []

@@ -86,7 +86,7 @@ class PropertyResource(BaseGNodeResource):
 class ValueResource(BaseGNodeResource):
     property = fields.ForeignKey(PropertyResource, 'property')
 
-    class Meta:
+    class Meta(BaseMeta):
         queryset = Value.objects.all()
         resource_name = 'value'
         excludes = ['starts_at', 'ends_at', 'document']

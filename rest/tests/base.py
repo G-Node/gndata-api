@@ -1,17 +1,14 @@
 import simplejson as json
 import string
 import random
-
-from django.test import TestCase
+from datetime import datetime
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.db import models
-
-from tastypie.serializers import Serializer
+from tastypie.test import ResourceTestCase
 from rest.resource import BaseFileResourceMixin
 
 
-class TestApi(TestCase):
+class TestApi(ResourceTestCase):
     """
     Abstract Base test class for Resource API testing.
     """
@@ -37,11 +34,6 @@ class TestApi(TestCase):
         self.resources = []
         self.assets = {}
 
-    def get_file_fields(self, resource):
-        """ parses related model and returns FileField instances, if any """
-        all_fields = resource.Meta.object_class._meta.local_fields
-        return [f for f in all_fields if isinstance(f, models.FileField)]
-
     def get_available_objs(self, resource, user):
         model = resource.Meta.queryset.model
         if hasattr(model, 'security_filter'):
@@ -53,30 +45,51 @@ class TestApi(TestCase):
         fields = resource.build_schema()['fields']
 
         dummy = {}
-        file_fields = [f.name for f in self.get_file_fields(resource)]
-        for name, meta in [k for k, v in fields.items() if not v['readonly']]:
+        file_fields = getattr(resource, "get_file_fields", {})
+        for name, meta in [(k, v) for k, v in fields.items() if not v['readonly']]:
 
-            if name in file_fields:
-                continue
+            if name in file_fields.keys() or name == 'safety_level' or \
+                    name.endswith('__unit') or name == 'document':
+                continue  # these fields have good default values
 
             if meta['type'] == 'related':
-                dummy[name] = random.choice(
-                    self.get_available_objs(getattr(resource, name).to, user)
-                ).pk
-
+                if meta['related_type'] == 'to_one':  # ignore to_many for now
+                    to = getattr(resource, name).to
+                    if isinstance(to, basestring) and to == 'self':
+                        to = resource
+                    dummy[name] = random.choice(
+                        self.get_available_objs(to, user)
+                    ).pk
             else:
                 dummy[name] = self.RANDOM_GENERATORS[meta['type']]()
 
         return dummy
 
+    def validate_json_response(self, dummy, json_obj):
+        for k, v in dummy.items():
+            new = json_obj[k]
+            if not isinstance(new, basestring):
+                self.assertEqual(json_obj[k], v)
+                continue
+
+            try:
+                new = datetime.strptime(json_obj[k], "%Y-%m-%dT%H:%M:%S")
+                self.assertEqual(new.strftime("%Y-%m-%d %H:%M:%S"), v)
+
+            except ValueError:  # not a datetime field
+                if new.lower().startswith('http'):
+                    self.assertTrue(v in new, ", ".join([v, new]))
+                else:
+                    self.assertEqual(json_obj[k], v)
+
     def test_list(self):
-        def validate_obj_count(url, user, count):
+        def validate_obj_count(count):
             self.login(user)
 
             response = self.client.get(url)
             data = json.loads(response.content)
             self.assertEqual(response.status_code, 200, response.content)
-            self.assertEqual(len(data['objects']), count)
+            self.assertEqual(len(data[resource.Meta.collection_name]), count)
 
             self.logout()
 
@@ -87,7 +100,7 @@ class TestApi(TestCase):
 
             for user in [self.bob, self.ed]:
                 count = self.get_available_objs(resource, user).count()
-                validate_obj_count(url, user, count)
+                validate_obj_count(count)
 
     def test_get(self):
         # TODO also test back in time
@@ -113,12 +126,12 @@ class TestApi(TestCase):
             if not isinstance(resource, BaseFileResourceMixin):
                 continue
 
-            name = resource.Meta.resource_name
+            res_name = resource.Meta.resource_name
             ver = resource.Meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
 
-            for field in self.get_file_fields(resource):
-                url = "/api/%s/%s/%s/%s" % (ver, name, obj.local_id, field.name)
+            for name, field in resource.get_file_fields():
+                url = "/api/%s/%s/%s/%s" % (ver, res_name, obj.local_id, name)
 
                 self.login(self.ed)
 
@@ -132,8 +145,6 @@ class TestApi(TestCase):
                 self.assertEqual(response.status_code, 200, response.content)
 
     def test_create(self):
-        # generic test for a resource. assumes a copy of a random existing
-        # object in JSON can be saved as a new object.
         self.login(self.bob)
 
         for resource in self.resources:
@@ -141,54 +152,37 @@ class TestApi(TestCase):
             ver = resource.Meta.api_name
             url = "/api/%s/%s/" % (ver, name)
 
-            """
-            obj = self.get_available_objs(resource, self.bob)[0]
-
-            res = resource()
-            bundle = res.build_bundle(obj=obj)
-            res.full_dehydrate(bundle)  # some magic here
-            res.full_dehydrate(bundle)  # no clue why this is needed twice..
-
-            bundle.obj.local_id = None  # new object
-            bundle.data.pop('local_id')
-
-            post = Serializer().to_json(bundle)
-            """
-
             dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
             response = self.client.post(url, json.dumps(dummy), **kwargs)
 
             self.assertEqual(response.status_code, 201, response.content)
 
+            # TODO update data-fields
+
     def test_update(self):
         for resource in self.resources:
-            obj = self.get_available_objs(resource, self.bob)[0]
-
             name = resource.Meta.resource_name
             ver = resource.Meta.api_name
+            obj = self.get_available_objs(resource, self.bob)[0]
             url = "/api/%s/%s/%s/" % (ver, name, obj.local_id)
 
-            res = resource()
-            bundle = res.build_bundle(obj=obj)
-            res.full_dehydrate(bundle)  # some magic here
-            res.full_dehydrate(bundle)  # no clue why this is needed twice..
-
-            bundle.obj.local_id = None  # clean ids
-            bundle.data.pop('local_id')
-
-            post = Serializer().to_json(bundle)
+            dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
 
             self.login(self.bob)
 
-            response = self.client.put(url, post, **kwargs)
-            self.assertEqual(response.status_code, 204, response.content)
+            response = self.client.put(url, json.dumps(dummy), **kwargs)
+            self.assertEqual(response.status_code, 200, response.content)
+            json_obj = resource._meta.serializer.deserialize(
+                response.content, format=response['Content-Type']
+            )
+            self.validate_json_response(dummy, json_obj)
 
             self.logout()
             self.login(self.ed)
 
-            response = self.client.put(url, post, **kwargs)
+            response = self.client.put(url, json.dumps(dummy), **kwargs)
             self.assertEqual(response.status_code, 401, response.content)
 
     def test_delete(self):

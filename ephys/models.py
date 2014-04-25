@@ -124,7 +124,7 @@ class EventArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
 
     # NEO data arrays
     labels = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
-    times = models.FileField(storage=fs, upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO relationships
@@ -163,9 +163,9 @@ class EpochArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
 
     # NEO data arrays
     labels = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
-    times = models.FileField(storage=fs, upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
-    durations = models.FileField(storage=fs, upload_to=make_upload_path)
+    durations = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     durations__unit = TimeUnitField('durations__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO relationships
@@ -253,7 +253,7 @@ class SpikeTrain(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     unit = VersionedForeignKey(Unit, blank=True, null=True)
 
     # NEO data arrays
-    times = models.FileField(storage=fs, upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
     waveforms = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     waveforms__unit = SignalUnitField('waveforms__unit', blank=True, null=True)
@@ -280,7 +280,7 @@ class AnalogSignalArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     t_start__unit = TimeUnitField('t_start__unit', default=DEFAULTS['default_time_unit'])
 
     # NEO data arrays
-    signal = models.FileField(storage=fs, upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     signal__unit = SignalUnitField('signals__unit', default=DEFAULTS['default_data_unit'])
 
     # NEO relationships
@@ -312,7 +312,7 @@ class AnalogSignal(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     recordingchannel = VersionedForeignKey(RecordingChannel, blank=True, null=True)
     
     # NEO data arrays
-    signal = models.FileField(storage=fs, upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     signal__unit = SignalUnitField('signal__unit', default=DEFAULTS['default_data_unit'])
 
     def save(self, *args, **kwargs):
@@ -335,9 +335,9 @@ class IrregularlySampledSignal(BlockBasedPermissionsMixin, BaseInfo, DataObject)
     recordingchannel = VersionedForeignKey(RecordingChannel, blank=True, null=True)
 
     # NEO data arrays
-    signal = models.FileField(storage=fs, upload_to=make_upload_path)
+    signal = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     signal__unit = SignalUnitField('signal__unit', default=DEFAULTS['default_data_unit'])
-    times = models.FileField(storage=fs, upload_to=make_upload_path)
+    times = models.FileField(storage=fs, upload_to=make_upload_path, blank=True, null=True)
     times__unit = TimeUnitField('times__unit', default=DEFAULTS['default_time_unit'])
 
     def full_clean(self, *args, **kwargs):

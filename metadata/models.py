@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from state_machine.models import BaseGnodeObject
 from permissions.models import BasePermissionsMixin
 from security import DocumentBasedPermissionsMixin
@@ -50,7 +51,9 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
         'self', blank=True, null=True, related_name='section_set',
         on_delete=models.CASCADE
     )
-    document = VersionedForeignKey(Document, on_delete=models.CASCADE)
+    document = VersionedForeignKey(
+        Document, blank=True, null=True, on_delete=models.CASCADE
+    )
 
     # position in the list on the same level in the tree
     tree_position = models.IntegerField(default=0)
@@ -124,6 +127,9 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
             # section has a priority. if section is set, the document of the new
             # section will be taken from the parent section, not from the
             # current 'document' attribute
+            if self.section is None and self.document is None:
+                raise ValidationError("Either document or section must present")
+
             if self.section is not None:
                 self.document = self.section.document
 

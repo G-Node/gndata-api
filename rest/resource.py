@@ -20,6 +20,7 @@ class BaseMeta:
     authentication = SessionAuthentication()
     authorization = BaseAuthorization()
     collection_name = 'selected'
+    always_return_data = True
     filtering = {
         'local_id': ALL,
         'date_created': ALL,
@@ -47,13 +48,60 @@ class BaseGNodeResource(ModelResource):
 
         fresh_bundle = super(BaseGNodeResource, self).dehydrate(bundle)
         for k, v in fresh_bundle.data.items():
-            if isinstance(v, str):
+            if isinstance(v, basestring):
                 fresh_bundle.data[k] = extend_if_url(v)
 
             elif isinstance(v, list):
                 fresh_bundle.data[k] = [extend_if_url(x) for x in v]
 
         return fresh_bundle
+
+    def hydrate(self, bundle):
+        """ convert given full URLs (with http:// etc.) and single IDs for
+        related FK fields into standard API form like /api/v1/<resource>/<id>/
+        """
+        def normalize_if_url(value):
+            # check if full URL is given
+            if value.lower().startswith("http"):
+                return urlparse.urlparse(value).path
+
+            # check if just an ID is given
+            elif not value.lower().startswith("/api/"):
+                to = field.to
+                if isinstance(to, basestring) and to == 'self':
+                    to = self
+                return "/api/%s/%s/%s/" % (
+                    self._meta.api_name, to.Meta.resource_name, value
+                )
+            return value
+
+        fresh_bundle = super(BaseGNodeResource, self).hydrate(bundle)
+
+        is_related = lambda x: hasattr(x, 'is_related') and x.is_related
+        rel_fields = [(n, f) for n, f in self.fields.items() if is_related(f)]
+        for name, field in rel_fields:
+            if not name in fresh_bundle.data.keys():
+                continue
+
+            value = fresh_bundle.data[name]
+            if isinstance(value, basestring):
+                fresh_bundle.data[name] = normalize_if_url(value)
+
+            elif isinstance(value, list):
+                fresh_bundle.data[name] = [normalize_if_url(x) for x in value]
+
+        return fresh_bundle
+
+    def obj_create(self, bundle, **kwargs):
+        """ always set owner of an object to the request.user """
+        return super(BaseGNodeResource, self).obj_create(
+            bundle, owner=bundle.request.user
+        )
+
+    def save_m2m(self, bundle):
+        """ ignore m2m relations sent via the API. TODO add specific m2m like
+        for RCG <-> RC and others, if any """
+        pass
 
     def get_schema(self, request, **kwargs):
         """
@@ -75,19 +123,28 @@ class BaseGNodeResource(ModelResource):
 
 class BaseFileResourceMixin(ModelResource):
 
+    def __init__(self, *args, **kwargs):
+        """ makes all file fields read-only to avoid parsing these fields on
+        create / update """
+        super(BaseFileResourceMixin, self).__init__(*args, **kwargs)
+        for name, field in self.get_file_fields().items():
+            field.readonly = True
+
     def dehydrate(self, bundle):
         """ converts output for every FileField into an URL (as defined in
         file_url_regex """
 
         fresh_bundle = super(BaseFileResourceMixin, self).dehydrate(bundle)
-        all_fields = self.Meta.object_class._meta.local_fields
-        file_fields = [f for f in all_fields if isinstance(f, models.FileField)]
 
-        for f in file_fields:
+        for name, field in self.get_file_fields().items():
             uri = fresh_bundle.data['resource_uri']
-            fresh_bundle.data[f.name] = os.path.join(uri, f.name) + '/'
+            fresh_bundle.data[name] = os.path.join(uri, name) + '/'
 
         return fresh_bundle
+
+    def get_file_fields(self):
+        return dict([(name, field) for name, field in self.fields.items()
+                     if isinstance(field, fields.FileField)])
 
     def file_url_regex(self, resource_name):
         return r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/(?P<attr_name>\w[\w/-]*)%s$" % \
