@@ -67,9 +67,7 @@ class BaseGNodeResource(ModelResource):
 
             # check if just an ID is given
             elif not value.lower().startswith("/api/"):
-                to = field.to
-                if isinstance(to, basestring) and to == 'self':
-                    to = self
+                to = field.to_class
                 return "/api/%s/%s/%s/" % (
                     self._meta.api_name, to.Meta.resource_name, value
                 )
@@ -127,7 +125,7 @@ class BaseFileResourceMixin(ModelResource):
         """ makes all file fields read-only to avoid parsing these fields on
         create / update """
         super(BaseFileResourceMixin, self).__init__(*args, **kwargs)
-        for name, field in self.get_file_fields().items():
+        for name, field in self.file_fields.items():
             field.readonly = True
 
     def dehydrate(self, bundle):
@@ -136,13 +134,14 @@ class BaseFileResourceMixin(ModelResource):
 
         fresh_bundle = super(BaseFileResourceMixin, self).dehydrate(bundle)
 
-        for name, field in self.get_file_fields().items():
+        for name, field in self.file_fields.items():
             uri = fresh_bundle.data['resource_uri']
             fresh_bundle.data[name] = os.path.join(uri, name) + '/'
 
         return fresh_bundle
 
-    def get_file_fields(self):
+    @property
+    def file_fields(self):
         return dict([(name, field) for name, field in self.fields.items()
                      if isinstance(field, fields.FileField)])
 
@@ -202,10 +201,15 @@ class BaseFileResourceMixin(ModelResource):
 
         if request.method == 'GET':
             ffile = getattr(obj, attr_name)
-            with open(ffile.path, 'r') as f:
+            try:
+                filepath = ffile.path
+            except ValueError:  # file is not set, empty
+                return http.HttpNoContent()
+
+            with open(filepath, 'r') as f:
                 response = HttpResponse(f.read(), mimetype='application/x-hdf')
                 response['Content-Disposition'] = "attachment; filename=%s" % \
-                                                  os.path.basename(ffile.path)
+                                                  os.path.basename(filepath)
                 response['Content-Length'] = os.path.getsize(f.name)
                 return response
 

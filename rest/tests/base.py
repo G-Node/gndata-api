@@ -45,7 +45,7 @@ class TestApi(ResourceTestCase):
         fields = resource.build_schema()['fields']
 
         dummy = {}
-        file_fields = getattr(resource, "get_file_fields", {})
+        file_fields = getattr(resource, "file_fields", {})
         for name, meta in [(k, v) for k, v in fields.items() if not v['readonly']]:
 
             if name in file_fields.keys() or name == 'safety_level' or \
@@ -54,12 +54,19 @@ class TestApi(ResourceTestCase):
 
             if meta['type'] == 'related':
                 if meta['related_type'] == 'to_one':  # ignore to_many for now
-                    to = getattr(resource, name).to
-                    if isinstance(to, basestring) and to == 'self':
-                        to = resource
                     dummy[name] = random.choice(
-                        self.get_available_objs(to, user)
+                        self.get_available_objs(
+                            getattr(resource, name).to_class, user
+                        )
                     ).pk
+
+                elif meta['related_type'] == 'to_many' and \
+                                name == 'recordingchannelgroup':
+                    dummy[name] = [random.choice(
+                        self.get_available_objs(
+                            getattr(resource, name).to_class, user
+                        )
+                    ).pk]  # set one random RCG
             else:
                 dummy[name] = self.RANDOM_GENERATORS[meta['type']]()
 
@@ -68,6 +75,9 @@ class TestApi(ResourceTestCase):
     def validate_json_response(self, dummy, json_obj):
         for k, v in dummy.items():
             new = json_obj[k]
+            if isinstance(new, list):
+                continue  # skips m2m FIXME
+
             if not isinstance(new, basestring):
                 self.assertEqual(json_obj[k], v)
                 continue
@@ -130,8 +140,8 @@ class TestApi(ResourceTestCase):
             ver = resource.Meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
 
-            for name, field in resource.get_file_fields():
-                url = "/api/%s/%s/%s/%s" % (ver, res_name, obj.local_id, name)
+            for name, field in resource.file_fields.items():
+                url = "/api/%s/%s/%s/%s/" % (ver, res_name, obj.local_id, name)
 
                 self.login(self.ed)
 
@@ -142,7 +152,11 @@ class TestApi(ResourceTestCase):
                 self.login(self.bob)
 
                 response = self.client.get(url)
-                self.assertEqual(response.status_code, 200, response.content)
+                try:
+                    filepath = getattr(obj, name).path
+                    self.assertEqual(response.status_code, 200)
+                except ValueError:
+                    self.assertEqual(response.status_code, 204)
 
     def test_create(self):
         self.login(self.bob)

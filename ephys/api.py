@@ -109,8 +109,11 @@ class RCGResource(BaseGNodeResource):
 
 
 class RCResource(BaseGNodeResource):
+
+    # FIXME: m2m relationship does not work
+
     recordingchannelgroup = fields.ToManyField(
-        'metadata.api.RCGResource', 'recordingchannelgroup',
+        'ephys.api.RCGResource', 'recordingchannelgroup',
         related_name='recordingchannel', full=False, blank=True, null=True
     )
     analogsignal_set = fields.ToManyField(
@@ -125,6 +128,21 @@ class RCResource(BaseGNodeResource):
     class Meta(BaseMeta):
         queryset = RecordingChannel.objects.all()
         resource_name = RecordingChannel.__name__.lower()
+
+    def hydrate_recordingchannelgroup(self, bundle):
+        if bundle.obj.block_id is not None:
+            return bundle
+
+        if not 'recordingchannelgroup' in bundle.data.keys() or \
+                len(bundle.data['recordingchannelgroup']) == 0:
+            raise ValueError("'recordingchannelgroup' attribute is mandatory")
+
+        rcg_field = self.fields['recordingchannelgroup']
+        rcg_uri = bundle.data['recordingchannelgroup'][0]
+        rcg = rcg_field.to_class().get_via_uri(rcg_uri, request=bundle.request)
+
+        bundle.obj.block_id = rcg.block_id
+        return bundle
 
 
 class UnitResource(BaseGNodeResource):
