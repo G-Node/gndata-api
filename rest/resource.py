@@ -35,6 +35,9 @@ class BaseGNodeResource(ModelResource):
     guid = fields.CharField(attribute='guid', readonly=True)
     local_id = fields.CharField(attribute='local_id', readonly=True)
 
+    def determine_format(self, request):
+        return 'application/json'
+
     def dehydrate(self, bundle):
         """ tastypie does not (?) support full URLs having hostname etc. This is
         a hack to make full URLs with http:// etc. """
@@ -47,8 +50,16 @@ class BaseGNodeResource(ModelResource):
         base = '%s://%s' % (prefix, bundle.request.get_host())
 
         fresh_bundle = super(BaseGNodeResource, self).dehydrate(bundle)
-        for k, v in fresh_bundle.data.items():
-            if isinstance(v, basestring):
+
+        for k, v in fresh_bundle.data.copy().items():
+            if k == 'resource_uri':  # add location
+                fresh_bundle.data['location'] = v
+
+            if k == 'local_id':
+                fresh_bundle.data['id'] = v
+                fresh_bundle.data.pop('local_id')
+
+            elif isinstance(v, basestring):
                 fresh_bundle.data[k] = extend_if_url(v)
 
             elif isinstance(v, list):
