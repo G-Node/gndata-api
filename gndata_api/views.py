@@ -2,33 +2,11 @@ from django.shortcuts import render_to_response
 from django.http import HttpResponseBadRequest
 from django.template import RequestContext
 from django.utils import six
-
-from metadata.api import *
-from ephys.api import *
+from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
 
 import simplejson as json
 
-
-RESOURCES = {
-    'document': DocumentResource,
-    'section': SectionResource,
-    'property': PropertyResource,
-    'value': ValueResource,
-    'block': BlockResource,
-    'segment': SegmentResource,
-    'eventarray': EventArrayResource,
-    'event': EventResource,
-    'epocharray': EpochArrayResource,
-    'epoch': EpochResource,
-    'recordingchannelgroup': RCGResource,
-    'recordingchannel': RCResource,
-    'unit': UnitResource,
-    'spiketrain': SpikeTrainResource,
-    'analogsignalarray': ASAResource,
-    'analogsignal': AnalogSignalResource,
-    'irregularlysampledsignal': IRSAResource,
-    'spike': SpikeResource,
-}
+RESOURCES = dict(METADATA_RESOURCES.items() + EPHYS_RESOURCES.items())
 
 
 def list_view(request, resource_type):
@@ -36,7 +14,7 @@ def list_view(request, resource_type):
         message = "Objects of type %s are note supported." % resource_type
         return HttpResponseBadRequest(message)
 
-    res = RESOURCES[resource_type]()
+    res = RESOURCES[resource_type]
     request_bundle = res.build_bundle(request=request)
     queryset = res.obj_get_list(request_bundle)
 
@@ -67,7 +45,7 @@ def detail_view(request, resource_type, id):
         message = "Objects of type %s are note supported." % resource_type
         return HttpResponseBadRequest(message)
 
-    res = RESOURCES[resource_type]()
+    res = RESOURCES[resource_type]
     request_bundle = res.build_bundle(request=request)
     obj = res.obj_get(request_bundle, pk=id)
 

@@ -164,7 +164,7 @@ class Value(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
     Class implemented metadata Value.
     """
-    type = models.TextField('type')
+    data = models.TextField('data')
     uncertainty = models.CharField(max_length=100, blank=True, null=True)
     unit = models.CharField(max_length=100, blank=True, null=True)
     reference = models.CharField(max_length=100, blank=True, null=True)

@@ -33,6 +33,7 @@ class TestApi(ResourceTestCase):
         self.ed = User.objects.get(pk=2)
         self.resources = []
         self.assets = {}
+        self.url_prefix = 'api/v1'
 
     def get_available_objs(self, resource, user):
         model = resource.Meta.queryset.model
@@ -105,8 +106,8 @@ class TestApi(ResourceTestCase):
 
         for resource in self.resources:
             name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
-            url = "/api/%s/%s/?format=json" % (ver, name)
+            api_name = resource.Meta.api_name
+            url = "/%s/%s/%s/" % (self.url_prefix, api_name, name)
 
             for user in [self.bob, self.ed]:
                 count = self.get_available_objs(resource, user).count()
@@ -116,9 +117,11 @@ class TestApi(ResourceTestCase):
         # TODO also test back in time
         for resource in self.resources:
             name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
+            api_name = resource.Meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
-            url = "/api/%s/%s/%s/?format=json" % (ver, name, obj.local_id)
+            url = "/%s/%s/%s/%s/" % (
+                self.url_prefix, api_name, name, obj.local_id
+            )
 
             self.login(self.ed)
 
@@ -137,11 +140,13 @@ class TestApi(ResourceTestCase):
                 continue
 
             res_name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
+            api_name = resource.Meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
 
             for name, field in resource.file_fields.items():
-                url = "/api/%s/%s/%s/%s/" % (ver, res_name, obj.local_id, name)
+                url = "/%s/%s/%s/%s/%s/" % (
+                    self.url_prefix, api_name, res_name, obj.local_id, name
+                )
 
                 self.login(self.ed)
 
@@ -163,8 +168,8 @@ class TestApi(ResourceTestCase):
 
         for resource in self.resources:
             name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
-            url = "/api/%s/%s/" % (ver, name)
+            api_name = resource.Meta.api_name
+            url = "/%s/%s/%s/" % (self.url_prefix, api_name, name)
 
             dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
@@ -177,9 +182,11 @@ class TestApi(ResourceTestCase):
     def test_update(self):
         for resource in self.resources:
             name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
+            api_name = resource.Meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
-            url = "/api/%s/%s/%s/" % (ver, name, obj.local_id)
+            url = "/%s/%s/%s/%s/" % (
+                self.url_prefix, api_name, name, obj.local_id
+            )
 
             dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
@@ -203,8 +210,10 @@ class TestApi(ResourceTestCase):
         for resource in self.resources:
             obj = self.get_available_objs(resource, self.bob)[0]
             name = resource.Meta.resource_name
-            ver = resource.Meta.api_name
-            url = "/api/%s/%s/%s/" % (ver, name, obj.local_id)
+            api_name = resource.Meta.api_name
+            url = "/%s/%s/%s/%s/" % (
+                self.url_prefix, api_name, name, obj.local_id
+            )
 
             self.login(self.ed)
 

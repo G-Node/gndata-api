@@ -28,7 +28,7 @@ class Assets(BaseAssets):
                 name="prop %d" % r, section=section, owner=section.owner
             )
             v = Value.objects.create(
-                type="value %d" % r, property=p, owner=section.owner
+                data="value %d" % r, property=p, owner=section.owner
             )
             assets["property"].append(p)
             assets["value"].append(v)
