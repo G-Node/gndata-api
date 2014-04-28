@@ -31,7 +31,7 @@ class Assets(BaseAssets):
             os.makedirs(fullpath.replace(filename, ''))
 
         f = h5py.File(fullpath)
-        f.create_dataset(name=uid, data=[2.48, 1.58, 9.30, 4.88, 4.75])
+        f.create_dataset(name=uid, data=[1.48, 2.58, 3.30, 3.88, 4.75])
         f.close()
 
         return rel_path
@@ -175,7 +175,7 @@ class Assets(BaseAssets):
             unit = assets['unit'][0] if i < 2 else assets['unit'][1]
             params = {
                 'name': "Spiketrain %d" % (i + 1),
-                't_start': 1.56,
+                't_start': 0.56,
                 't_start__unit': 'ms',
                 't_stop': 5.23,
                 't_stop__unit': 'ms',

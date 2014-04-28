@@ -37,7 +37,7 @@ class SegmentResource(BaseGNodeResource):
         related_name='segment', full=False, blank=True, null=True
     )
     analogsignalarray_set = fields.ToManyField(
-        'ephys.api.SpikeTrainResource', 'analogsignalarray_set',
+        'ephys.api.ASAResource', 'analogsignalarray_set',
         related_name='segment', full=False, blank=True, null=True
     )
     event_set = fields.ToManyField(
