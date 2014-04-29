@@ -176,7 +176,7 @@ class Value(DocumentBasedPermissionsMixin, BaseGnodeObject):
     document = VersionedForeignKey(Document)
 
     def __unicode__(self):
-        return self.type
+        return self.data
 
     def save(self, *args, **kwargs):
         self.document = self.property.document

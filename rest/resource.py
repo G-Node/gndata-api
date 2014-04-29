@@ -8,21 +8,21 @@ from django.db import models
 from django.db.models.fields import FieldDoesNotExist
 from tastypie import fields, http
 from tastypie.utils import trailing_slash
-from tastypie.authentication import SessionAuthentication
 from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from tastypie.resources import ModelResource
 from account.api import UserResource
 from permissions.authorization import BaseAuthorization
+from permissions.authorization import SessionAuthenticationNoSCRF
 
 
 class BaseMeta:
     excludes = ['starts_at', 'ends_at']
-    authentication = SessionAuthentication()
+    authentication = SessionAuthenticationNoSCRF()
     authorization = BaseAuthorization()
     collection_name = 'selected'
     always_return_data = True
     filtering = {
-        'local_id': ALL,
+        'id': ALL,
         'date_created': ALL,
         'owner': ALL_WITH_RELATIONS
     }
@@ -33,7 +33,7 @@ class BaseGNodeResource(ModelResource):
     owner = fields.ForeignKey(UserResource, 'owner', readonly=True)
     date_created = fields.DateTimeField(attribute='date_created', readonly=True)
     guid = fields.CharField(attribute='guid', readonly=True)
-    local_id = fields.CharField(attribute='local_id', readonly=True)
+    id = fields.CharField(attribute='local_id', readonly=True)
 
     def determine_format(self, request):
         return 'application/json'
@@ -54,10 +54,6 @@ class BaseGNodeResource(ModelResource):
         for k, v in fresh_bundle.data.copy().items():
             if k == 'resource_uri':  # add location
                 fresh_bundle.data['location'] = v
-
-            if k == 'local_id':
-                fresh_bundle.data['id'] = v
-                fresh_bundle.data.pop('local_id')
 
             elif isinstance(v, basestring):
                 fresh_bundle.data[k] = extend_if_url(v)
@@ -181,8 +177,8 @@ class BaseFileResourceMixin(ModelResource):
         """
         attr_name = kwargs.pop('attr_name')
 
-        if not request.method in ['GET', 'PUT']:
-            return http.HttpMethodNotAllowed("Use GET or PUT to manage files")
+        if not request.method in ['GET', 'POST']:
+            return http.HttpMethodNotAllowed("Use GET or POST to manage files")
 
         try:
             bundle = self.build_bundle(
@@ -198,7 +194,6 @@ class BaseFileResourceMixin(ModelResource):
         except MultipleObjectsReturned:
             return http.HttpMultipleChoices("More than one object found "
                                             "at this URL.")
-
         try:
             field = self.Meta.object_class._meta.get_field_by_name(attr_name)[0]
 

@@ -1,5 +1,15 @@
 from tastypie.authorization import Authorization
+from tastypie.authentication import SessionAuthentication
 from tastypie.exceptions import Unauthorized
+
+
+class SessionAuthenticationNoSCRF(SessionAuthentication):
+
+    def is_authenticated(self, request, **kwargs):
+        """ do not check CSRF tokens for POST requests """
+        if request.method == 'POST':
+            return request.user.is_authenticated()
+        return super(SessionAuthenticationNoSCRF, self).is_authenticated(request, **kwargs)
 
 
 class ACLManageAuthorization(Authorization):
