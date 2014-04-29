@@ -7,7 +7,7 @@ class SessionAuthenticationNoSCRF(SessionAuthentication):
 
     def is_authenticated(self, request, **kwargs):
         """ do not check CSRF tokens for POST requests """
-        if request.method == 'POST':
+        if request.method in ['PUT', 'POST', 'DELETE']:
             return request.user.is_authenticated()
         return super(SessionAuthenticationNoSCRF, self).is_authenticated(request, **kwargs)
 
