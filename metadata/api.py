@@ -23,7 +23,7 @@ class DocumentResource(BaseGNodeResource, PermissionsResourceMixin):
             'version': ALL,
             'repository': ALL,
             'owner': ALL_WITH_RELATIONS,
-            'local_id': ALL,
+            'id': ALL,
             'date_created': ALL
         }
 
@@ -44,7 +44,7 @@ class SectionResource(BaseGNodeResource):
         queryset = Section.objects.all()
         resource_name = 'section'
         filtering = {
-            'local_id': ALL,
+            'id': ALL,
             'name': ALL,
             'type': ALL,
             'reference': ALL,
@@ -78,7 +78,7 @@ class PropertyResource(BaseGNodeResource):
             'dependencyvalue': ALL,
             'section': ALL_WITH_RELATIONS,
             'owner': ALL_WITH_RELATIONS,
-            'local_id': ALL,
+            'id': ALL,
             'date_created': ALL
         }
 
@@ -100,6 +100,6 @@ class ValueResource(BaseGNodeResource):
             'checksum': ALL,
             'property': ALL_WITH_RELATIONS,
             'owner': ALL_WITH_RELATIONS,
-            'local_id': ALL,
+            'id': ALL,
             'date_created': ALL
         }

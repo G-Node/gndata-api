@@ -39,8 +39,8 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
 
     # odML fields
-    name = models.CharField(max_length=100, blank=True, null=True)
-    type = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=50, blank=True, null=True)
     reference = models.CharField(max_length=100, blank=True, null=True)
     definition = models.CharField(max_length=100, blank=True, null=True)
     link = models.CharField(max_length=100, blank=True, null=True)

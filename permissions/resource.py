@@ -31,7 +31,8 @@ class ACLResource(ModelResource):
         if not 'object_id' in keys or not 'object_type' in keys:
             raise ValueError('Must have type and ID to manage permissions')
 
-        return super(ACLResource, self).obj_get_list(bundle, **kwargs)
+        qs = self._meta.queryset._clone().filter(**kwargs)
+        return self.authorized_read_list(qs, bundle)
 
 
 class PermissionsResourceMixin(Resource):

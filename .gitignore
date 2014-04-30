@@ -56,3 +56,5 @@ docs/_build/
 *.iml
 *.idea
 *~
+
+local_settings.py
