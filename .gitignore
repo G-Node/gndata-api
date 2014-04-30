@@ -56,5 +56,8 @@ docs/_build/
 *.iml
 *.idea
 *~
-
 local_settings.py
+
+# sphinx build folder
+build/
+
