@@ -17,7 +17,7 @@ into the scientist's experimental or analysis routines.
 Dependencies
 ============
 
-Using the G-Node Client requires some other python packages to be installed:
+Using the GNData requires some other python packages to be installed:
 
 - django_ Django python web framework
 - django-tastypie_ REST controller for django
