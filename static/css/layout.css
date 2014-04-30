@@ -1,0 +1,341 @@
+.no-gap {
+  padding: 0;
+  margin: 0;
+}
+.small-gap {
+  padding: 0.2em;
+  margin: 0.2em;
+}
+.enum-with-comma ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: inline-block;
+  font-size: large;
+}
+.enum-with-comma li {
+  display: inline-block;
+}
+.enum-with-comma li span:after {
+  content: " ";
+}
+.enum-with-comma li:after {
+  content: ", ";
+}
+.enum-with-comma li:last-child:after {
+  content: "" !important;
+}
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #282828;
+  background-color: #ffffff;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.glyphicon {
+  margin-left: 0.5em;
+}
+.navbar {
+  margin-bottom: 20px;
+}
+.conference-logo {
+  max-height: 128px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.header,
+.marketing,
+.footer {
+  padding-right: 2em;
+  padding-left: 2em;
+}
+.page-header {
+  margin-top: 2em;
+}
+.main-content {
+  padding-left: 30px;
+  padding-right: 30px;
+  background-color: #ffffff;
+}
+.separator {
+  border: none;
+  height: 1px;
+  color: #333333;
+  background-color: #333333;
+}
+.header {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract-list {
+  margin-top: 0.5em;
+}
+#abstract-list a {
+  color: #282828;
+  text-decoration: none;
+}
+#abstract-list a:visited {
+  color: inherit;
+  text-decoration: none;
+}
+#abstract-list-item a {
+  display: block;
+}
+#abstract-list-item .abstract .sortId {
+  float: left;
+  width: 6ex;
+  min-height: 2ex;
+  margin-top: 0.5em;
+}
+#abstract-list-item .abstract .box {
+  margin-left: 6px;
+}
+#abstract-list-item .abstract h4 {
+  padding: 0;
+  margin: 0;
+  font-weight: bold;
+}
+#abstract-list-item .abstract .authors {
+  padding: 0;
+  margin: 0;
+  margin-top: 0.2em;
+  list-style: none;
+  display: inline-block;
+  font-size: 16px;
+}
+#abstract-list-item .abstract .authors ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: inline-block;
+  font-size: large;
+}
+#abstract-list-item .abstract .authors li {
+  display: inline-block;
+}
+#abstract-list-item .abstract .authors li span:after {
+  content: " ";
+}
+#abstract-list-item .abstract .authors li:after {
+  content: ", ";
+}
+#abstract-list-item .abstract .authors li:last-child:after {
+  content: "" !important;
+}
+#abstract-list-item:hover {
+  cursor: pointer;
+  background-color: #557bb9 !important;
+  color: White;
+}
+#abstract .pager {
+  padding: 0;
+  margin: 0;
+}
+#abstract .title {
+  padding: 0.2em;
+  margin: 0.2em;
+}
+#abstract .authors {
+  padding: 0.2em;
+  margin: 0.2em;
+}
+#abstract .authors ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: inline-block;
+  font-size: large;
+}
+#abstract .authors li {
+  display: inline-block;
+}
+#abstract .authors li span:after {
+  content: " ";
+}
+#abstract .authors li:after {
+  content: ", ";
+}
+#abstract .authors li:last-child:after {
+  content: "" !important;
+}
+#abstract .affiliations {
+  padding: 0.2em;
+  margin: 0.2em;
+  padding-left: 1.5em;
+}
+#abstract .affiliations ol {
+  padding: 0;
+  margin: 0;
+  padding-left: 1.8em;
+  color: #646464;
+  font-size: x-small;
+  vertical-align: super;
+}
+#abstract .affiliations ol span {
+  font-size: small;
+  font-style: italic;
+  vertical-align: middle;
+}
+#abstract .abstract-text {
+  padding: 0.5em;
+  margin: 0.5em;
+  font-family: "EB Garamond", Georgia, "Times New Roman", Times, serif;
+  font-size: 16px;
+  text-align: justify;
+  min-height: 10em;
+}
+#abstract .acknowledgements {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract .references {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract .references ol {
+  padding: 0;
+  margin: 0;
+  padding-left: 1.8em;
+}
+#abstract .foot-info {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract .poster-or-talk,
+#abstract .topic,
+#abstract .figure {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract .figure-box {
+  padding: 0.5em;
+  margin: 0.5em;
+}
+#abstract .figure-box .figure-image {
+  margin: 0.5em auto;
+  display: block;
+  max-width: 400px;
+  max-height: 300px;
+}
+#abstract .figure-box .figure-caption {
+  margin: 0.5em auto;
+  display: block;
+  font-style: italic;
+  max-width: 400px;
+}
+.state-btn-group {
+  margin: 1.2em 0 0 0;
+}
+.editor-box {
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border: 1px solid #ffffff;
+  min-height: 3.2em;
+}
+.editor-box .btn-group-hover {
+  margin-right: 0.5em;
+  margin-top: 0.5em;
+  visibility: hidden !important;
+}
+.editor-box .modal-header h3 {
+  margin: 4px 0 0 0;
+  padding: 0;
+}
+.editor-box .modal-header button {
+  margin-right: 12px;
+}
+.editor-box .modal-dialog {
+  margin-top: 10em;
+  width: 750px;
+}
+.editor-box .modal-body td {
+  border: 0;
+}
+.editor-box .modal-footer {
+  margin: 0;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+.editor-box .modal-footer button {
+  margin-right: 6px;
+}
+.editor-box .title h2:empty::after {
+  color: #646464;
+  content: "1. Enter your abstract title here";
+}
+.editor-box .authors ul:empty::after {
+  list-style: none;
+  color: #646464;
+  content: "2. Add all abstract authors";
+}
+.editor-box .affiliations ol:empty::after {
+  font-size: small;
+  list-style: none;
+  color: #646464;
+  content: "3. Add affiliations and assign authors";
+}
+.editor-box #affiliations-editor tbody .affiliation-form td {
+  border-top: 1px solid #cccccc;
+}
+.editor-box .abstract-text:empty::after {
+  color: #646464;
+  content: "4. Enter abstract text (up to 2000 characters)";
+}
+.editor-box .acknowledgements p:empty::after {
+  color: #646464;
+  content: "5. Enter acknowledgements text";
+}
+.editor-box .references ol:empty::after {
+  list-style: none;
+  color: #646464;
+  margin-left: -1.8em;
+  content: "6. Add referenced sources";
+}
+.editor-box .figure div:empty::after {
+  color: #646464;
+  margin-left: -1em;
+  content: "7. You have the option to include one image with your abstract. This image should be in one of the formats GIF, JPG, or PNG and should be at least 700 pixels wide and no larger than 5MB.";
+}
+.editor-box.editable:hover {
+  border-radius: 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border: 1px solid #cccccc;
+}
+.editor-box.editable:hover .btn-group-hover {
+  visibility: visible !important;
+}
+.hidden-data {
+  display: none;
+}
+.gray-icon {
+  color: #656d78;
+}
+.icon-no-gap {
+  padding: 0;
+  margin: 0;
+}
+.drag-handle-icon {
+  color: #656d78;
+  text-align: center;
+  vertical-align: middle;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+}
+.drag-handle-icon:active {
+  cursor: grabbing;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
+}
+.admin-form {
+  max-width: 600px;
+}

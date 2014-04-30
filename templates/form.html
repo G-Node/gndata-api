@@ -1,0 +1,21 @@
+<fieldset>
+{% for field in form %}
+
+    <div class="control-group" id="password_field">
+        <label class="control-label" for="currentPassword">{{ field.label_tag }}</label>
+        <div class="controls">
+
+            {{ field }}
+
+            {% if field.errors %}
+                {% for error in field.errors %}
+                    <span class="help-block">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+
+            <span class="help-block">{{ field.help_text }}</span>
+        </div>
+    </div>
+
+{% endfor %}
+</fieldset>
