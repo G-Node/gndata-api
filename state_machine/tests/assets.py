@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
-from gndata_api.assets import BaseAssets
-from gndata_api.fake import *
+from gndata_api.baseassets import BaseAssets
+from state_machine.tests.fake import *
 
 
 class Assets(BaseAssets):

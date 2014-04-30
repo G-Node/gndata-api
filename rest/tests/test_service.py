@@ -5,8 +5,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 
-from rest.service import BaseService
-from gndata_api.fake import *
+from rest._service import BaseService
+from rest.tests.fake import *
 from rest.tests.assets import Assets
 
 
@@ -20,8 +20,8 @@ class TestService(TestCase):
         self.assets = Assets().fill()
         self.bob = User.objects.get(pk=1)
         self.ed = User.objects.get(pk=2)
-        self.srv1 = BaseService(FakeModel)
-        self.srv2 = BaseService(FakeOwnedModel)
+        self.srv1 = BaseService(RestFakeModel)
+        self.srv2 = BaseService(RestFakeOwnedModel)
         self.origin = timezone.now()
 
     def test_list(self):
@@ -97,14 +97,14 @@ class TestService(TestCase):
         self.assertEqual(selected.test_attr, 1)
 
     def test_create(self):
-        count = FakeModel.objects.all().count()
+        count = RestFakeModel.objects.all().count()
 
         fm = self.assets["fake"][0]
         obj = self.srv1.create(self.ed, fm)
 
-        fresh = FakeModel.objects.all().get(pk=obj.pk)
+        fresh = RestFakeModel.objects.all().get(pk=obj.pk)
         self.assertEqual(fresh.test_attr, obj.test_attr)
-        self.assertEqual(FakeModel.objects.all().count(), count + 1)
+        self.assertEqual(RestFakeModel.objects.all().count(), count + 1)
 
     def test_update(self):
         fm = self.assets["fake"][0]
@@ -113,14 +113,14 @@ class TestService(TestCase):
         # authorized
         obj = self.srv1.update(self.bob, fm.pk, fm)
 
-        fresh = FakeModel.objects.all().get(pk=obj.pk)
+        fresh = RestFakeModel.objects.all().get(pk=obj.pk)
         self.assertEqual(fresh.test_attr, obj.test_attr)
 
         # non-authorized
         self.assertRaises(ReferenceError, self.srv1.update, self.ed, fm.pk, fm)
 
     def test_delete(self):
-        count = FakeModel.objects.all().count()
+        count = RestFakeModel.objects.all().count()
         fm = self.assets["fake"][0]
 
         # non-authorized
@@ -129,8 +129,8 @@ class TestService(TestCase):
         # authorized
         self.srv1.delete(self.bob, fm.pk)
 
-        self.assertRaises(ObjectDoesNotExist, FakeModel.objects.all().get, pk=fm.pk)
-        self.assertEqual(FakeModel.objects.all().count(), count - 1)
+        self.assertRaises(ObjectDoesNotExist, RestFakeModel.objects.all().get, pk=fm.pk)
+        self.assertEqual(RestFakeModel.objects.all().count(), count - 1)
 
     def tearDown(self):
         Assets().flush()

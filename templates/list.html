@@ -1,0 +1,26 @@
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class="panel-heading">Selected objects of type "{{ resource_type }}"</div>
+
+    <!-- Table -->
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Description</th>
+            <th>Owner</th>
+            <th>Date created</th>
+            <th>ID</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for obj in obj_list %}
+            <tr>
+                <td><a href="{{ obj.get_absolute_url }}">{{ obj }}</a></td>
+                <td><a href="{{ obj.owner.get_absolute_url }}">{{ obj.owner.username }}</a></td>
+                <td>{{ obj.date_created }}</td>
+                <td><a href="{{ obj.get_absolute_url }}">{{ obj.local_id }}</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>

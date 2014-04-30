@@ -12,7 +12,7 @@
             "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
-            "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
             "email": "bob@thefightclub.com",
             "date_joined": "2014-04-09 09:26:53Z"
         }
@@ -30,7 +30,7 @@
             "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
-            "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
             "email": "ed@nsa.com",
             "date_joined": "2014-04-09 09:26:53Z"
         }
@@ -48,7 +48,7 @@
             "last_login": "2014-04-09 09:26:53Z",
             "groups": [],
             "user_permissions": [],
-            "password": "pbkdf2_sha256$12000$SaGSY17bI3Dr$c7ZH7deCJ+ZZ0JA+S4D1wNfIMjuRMKe0ReXu7z20lrg=",
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
             "email": "neo@matrix.com",
             "date_joined": "2014-04-09 09:26:53Z"
         }

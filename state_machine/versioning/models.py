@@ -31,7 +31,8 @@ class BaseVersionedObject(models.Model):
     guid = models.CharField(max_length=40, editable=False)
     # local ID, invariant between object versions, distinct between objects
     # local ID + starts_at also making a 'real' PK
-    local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
+    #local_id = models.BigIntegerField('LID', primary_key=True, editable=False)
+    local_id = models.CharField(max_length=10, primary_key=True, editable=False)
     date_created = models.DateTimeField(editable=False)
     starts_at = models.DateTimeField(serialize=False, default=timezone.now, editable=False)
     ends_at = models.DateTimeField(serialize=False, blank=True, null=True, editable=False)
@@ -64,12 +65,8 @@ class BaseVersionedObject(models.Model):
     def save(self, *args, **kwargs):
         """ implements versioning by always saving new object. This should be
         already an atomic operation """
+        # update if self exists in the DB else create?
         self.__class__.objects.bulk_create([self])
-
-    @property
-    def local_id_as_str(self):
-        """ base32hex string representation of an ID """
-        return base32str(self.local_id)
 
     @property
     def get_type(self):
@@ -85,7 +82,7 @@ class BaseVersionedObject(models.Model):
 
     def get_absolute_url(self):
         """ by default this should be similar to that """
-        return ''.join(['/', get_type(self), '/', self.local_id_as_str, '/'])
+        return ''.join(['/', self.get_type, '/', self.local_id, '/'])
 
     def is_active(self):
         return not self.ends_at

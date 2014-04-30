@@ -2,6 +2,8 @@
 
 class BaseController(object):
     """
+    --- A PROTOTYPE FOR THE BASE CONTROLLER ---
+
     An abstract class that implements basic REST API functions like get single
     object, get list of objects, create, update and delete objects.
     """

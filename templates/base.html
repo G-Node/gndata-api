@@ -63,9 +63,41 @@
         <div class="navbar-collapse collapse">
 
             {% block navbar %}
-            <ul class="nav navbar-nav">
-                <li class=""><a href="/">G-Node Data Management Platform</a></li>
-            </ul>
+
+            {% if user.is_authenticated %}
+                <ul class="nav navbar-nav">
+                    <li class=""><a href="#">G-Node Data Management Platform</a></li>
+                    <li class=""><a href="/document/">Experiments</a></li>
+                    <li class=""><a href="/block/">Datasets</a></li>
+                    <li class=""><a href="#">or</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">select type <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            <li><a href="/section/">Sections</a></li>
+                            <li><a href="/property/">Properties</a></li>
+                            <li class="divider"></li>
+                            <li><a href="/segment/">Segments</a></li>
+                            <li><a href="/recordingchannelgroup/">Channel Groups</a></li>
+                            <li><a href="/recordingchannel/">Channels</a></li>
+                            <li><a href="/unit/">Units</a></li>
+                            <li><a href="/analogsignal/">Analog Signals</a></li>
+                            <li><a href="/analogsignalarray/">Signal Arrays</a></li>
+                            <li><a href="/spiketrain/">Spike Trains</a></li>
+                            <li><a href="/irregularlysampledsignal/">Irregular Signals</a></li>
+                            <li><a href="/epoch/">Epochs</a></li>
+                            <li><a href="/epocharray/">Epoch Arrays</a></li>
+                            <li><a href="/event/">Events</a></li>
+                            <li><a href="/eventarray/">Event Arrays</a></li>
+                            <li><a href="/spike/">Single Waveforms</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            {% else %}
+                <ul class="nav navbar-nav">
+                    <li class=""><a href="/">G-Node Data Management Platform</a></li>
+                </ul>
+            {% endif %}
+
             {% endblock %}
 
             {% block navbar-right %}

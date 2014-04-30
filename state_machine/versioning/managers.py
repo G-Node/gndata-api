@@ -16,7 +16,7 @@ class VersionManager(models.Manager):
 
     def all(self):
         """ need to proxy all() to apply versioning filters """
-        return self.get_query_set().all()
+        return self.get_queryset().all()
 
     def filter(self, **kwargs):
         """ method is overriden to support object versions. If an object is 
@@ -24,7 +24,7 @@ class VersionManager(models.Manager):
         kwargs to further proxy it to the QuerySet, so an appropriate version is
         fetched. """
         kwargs, timeflt = split_time(**kwargs)
-        return self.get_query_set(**timeflt).filter(**kwargs)
+        return self.get_queryset(**timeflt).filter(**kwargs)
 
     def proxy_time(self, proxy_to, **timeflt):
         if timeflt.has_key('at_time'):

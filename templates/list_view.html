@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    {% if obj_list %}
+
+        {% include "list.html" %}
+
+    {% else %}
+
+        <p>You don't have any saved documents yet. Please use one of the
+            Clients (<a href="https://github.com/G-Node/gnode-client-matlab/wiki" target="_blank">Matlab</a>,
+            <a href="http://g-node.github.io/python-gnode-client/" target="_blank">Python</a>)
+            to create metadata Documents or upload
+        datasets.</p>
+
+    {% endif %}
+
+{% endblock %}

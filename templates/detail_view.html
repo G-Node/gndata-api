@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="jumbotron">
+
+        <!-- Parent object references -->
+        {% if to_one_fields %}
+            <ul class="nav nav-pills">
+                {% for key, obj in to_one_fields.items %}
+                    {% ifequal key "owner" %}
+                        <li><a href="#">{{ key }}: {{ obj|truncatechars:20 }}</a></li>
+                    {% else %}
+                        <li class="active">
+                            <a href="{{ obj.get_absolute_url }}">&uarr; {{ key }}: {{ obj|truncatechars:20 }}</a>
+                        </li>
+                    {% endifequal %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Main object header -->
+        <h1>{{ obj|truncatechars:24 }}</h1>
+        <p>
+            This {{ resource_type }} was created by <b>{{ obj.owner.username }}</b>
+            on <b>{{ obj.date_created }}</b>
+        </p>
+        <p>
+            Its unique ID is <b>{{ obj.local_id }}</b>.
+        </p>
+
+        <!-- Main object attributes -->
+        <ul class="list-group">
+        {% for key, value in normal_fields.items %}
+            <li class="list-group-item"><span class="badge">{{ key }}</span>
+                {% ifequal value|slice:":4" "http" %}
+                    <a href="{{ value }}">{{ value }}</a>
+                {% else %}
+                    {{ value }}
+                {% endifequal %}
+            </li>
+        {% endfor %}
+        </ul>
+
+        <!-- Children references -->
+        {% for resource_type, obj_list in to_many_fields.items %}
+            {% include "list.html" %}
+        {% endfor %}
+
+        <!-- Useless button -->
+        <p><a class="btn btn-primary btn-lg" role="button">Push me for free</a></p>
+    </div>
+
+{% endblock %}
