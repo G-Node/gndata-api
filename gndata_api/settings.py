@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 try:
     from local_settings import *
 except ImportError:
-    raise ImportError("please create file with local settings before")
+    raise ImportError("please create 'local_settings.py' file based on "
+                      "'local_settings_template.py' before running the app")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
