@@ -61,3 +61,6 @@ local_settings.py
 # sphinx build folder
 build/
 
+
+# apache
+apache.conf
