@@ -39,6 +39,14 @@ class SectionResource(BaseGNodeResource):
         'metadata.api.PropertyResource', 'property_set', related_name='section',
         full=False, blank=True, null=True
     )
+    block_set = fields.ToManyField(
+        'ephys.api.BlockResource', 'block_set', related_name='section',
+        full=False, blank=True, null=True
+    )
+    segment_set = fields.ToManyField(
+        'ephys.api.SegmentResource', 'segment_set', related_name='section',
+        full=False, blank=True, null=True
+    )
 
     class Meta(BaseMeta):
         queryset = Section.objects.all()

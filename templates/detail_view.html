@@ -20,7 +20,7 @@
         {% endif %}
 
         <!-- Main object header -->
-        <h1>{{ obj|truncatechars:24 }}</h1>
+        <h2><b>{{ obj|truncatechars:50 }}</b></h2>
         <p>
             This {{ resource_type }} was created by <b>{{ obj.owner.username }}</b>
             on <b>{{ obj.date_created }}</b>
@@ -46,9 +46,6 @@
         {% for resource_type, obj_list in to_many_fields.items %}
             {% include "list.html" %}
         {% endfor %}
-
-        <!-- Useless button -->
-        <p><a class="btn btn-primary btn-lg" role="button">Push me for free</a></p>
     </div>
 
 {% endblock %}

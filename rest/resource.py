@@ -76,7 +76,7 @@ class BaseGNodeResource(ModelResource):
             elif not value.lower().startswith("/api/"):
                 to = field.to_class
                 return "/api/v1/%s/%s/%s/" % (  # FIXME generalize URL prefix
-                    self._meta.api_name, to.Meta.resource_name, value
+                    to.Meta.api_name, to.Meta.resource_name, value
                 )
             return value
 

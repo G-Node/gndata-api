@@ -1,0 +1,56 @@
+[
+    {
+        "pk": 1,
+        "model": "auth.user",
+        "fields": {
+            "username": "thomas",
+            "first_name": "Thomas",
+            "last_name": "Wachtler",
+            "is_active": true,
+            "is_superuser": false,
+            "is_staff": false,
+            "last_login": "2014-04-09 09:26:53Z",
+            "groups": [],
+            "user_permissions": [],
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
+            "email": "wachtler@bio.lmu.de",
+            "date_joined": "2014-04-09 09:26:53Z"
+        }
+    },
+    {
+        "pk": 2,
+        "model": "auth.user",
+        "fields": {
+            "username": "ed",
+            "first_name": "Edward",
+            "last_name": "Snowden",
+            "is_active": true,
+            "is_superuser": true,
+            "is_staff": false,
+            "last_login": "2014-04-09 09:26:53Z",
+            "groups": [],
+            "user_permissions": [],
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
+            "email": "ed@nsa.com",
+            "date_joined": "2014-04-09 09:26:53Z"
+        }
+    },
+    {
+        "pk": 3,
+        "model": "auth.user",
+        "fields": {
+            "username": "demo",
+            "first_name": "Thomas",
+            "last_name": "Anderson",
+            "is_active": true,
+            "is_superuser": false,
+            "is_staff": false,
+            "last_login": "2014-04-09 09:26:53Z",
+            "groups": [],
+            "user_permissions": [],
+            "password": "pbkdf2_sha256$12000$1rXObkEOQIqc$BEmNlplntGkCPAlDan06yMvShj6wGQMYwS4fEGJZACw=",
+            "email": "neo@matrix.com",
+            "date_joined": "2014-04-09 09:26:53Z"
+        }
+    }
+]

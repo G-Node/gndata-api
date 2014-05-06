@@ -1,4 +1,3 @@
-from tastypie.resources import ALL, ALL_WITH_RELATIONS
 from tastypie import fields
 from ephys.models import *
 from rest.resource import BaseMeta, BaseGNodeResource, BaseFileResourceMixin
@@ -12,6 +11,10 @@ class BlockResource(BaseGNodeResource, PermissionsResourceMixin):
         'ephys.api.SegmentResource', 'segment_set', related_name='block',
         full=False, blank=True, null=True
     )
+    recordingchannelgroup_set = fields.ToManyField(
+        'ephys.api.RCGResource', 'recordingchannelgroup_set',
+        related_name='block', full=False, blank=True, null=True
+    )
 
     class Meta(BaseMeta):
         queryset = Block.objects.all()
@@ -19,6 +22,7 @@ class BlockResource(BaseGNodeResource, PermissionsResourceMixin):
 
 
 class SegmentResource(BaseGNodeResource):
+    metadata = fields.ToOneField(SectionResource, 'metadata', blank=True, null=True)
     block = fields.ToOneField(BlockResource, 'block')
     spiketrain_set = fields.ToManyField(
         'ephys.api.SpikeTrainResource', 'spiketrain_set',

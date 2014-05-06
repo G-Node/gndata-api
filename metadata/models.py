@@ -20,8 +20,8 @@ class Document(BasePermissionsMixin, BaseGnodeObject):
     repository = models.CharField(max_length=100, blank=True, null=True)
 
     def __unicode__(self):
-        return "odML Document (by %s, %s, ver. %s)" % \
-            (self.author, str(self.date), self.version)
+        return "Document (by %s, %s, ver. %s)" % \
+            (self.author, str(self.date or "(date not set)"), self.version)
 
 
 class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
