@@ -34,11 +34,16 @@ if __name__ == "__main__":
     # create tables for the new schema
     call_command('syncdb')
 
-    # create test users
-    call_command('loaddata', 'users')
+    if settings.DEBUG:  # count as Dev environment
+        # create test users
+        call_command('loaddata', 'users')
 
-    # create test metadata
-    MA().fill()
+        # create test metadata
+        MA().fill()
 
-    # create test ephys objects
-    EA().fill()
+        # create test ephys objects
+        EA().fill()
+
+    else:
+        # create test users
+        call_command('loaddata', 'production_users')
