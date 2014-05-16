@@ -69,6 +69,10 @@ urlpatterns = patterns('',
     url(r'^account/', include('account.urls')),
     url(r'^admin/', include(admin.site.urls)),
 
+    # Bulk data processing -----------------------------------------------------
+
+    url(r'^in_bulk/$', 'gndata_api.views.in_bulk', name="in_bulk"),
+
     # REST API -----------------------------------------------------------------
 
     url(r'^api/v1/', include(v1_user_api.urls)),
