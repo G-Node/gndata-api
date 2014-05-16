@@ -1,12 +1,22 @@
+from django.core.files import File
 from django.shortcuts import render_to_response
 from django.http import HttpResponseBadRequest
 from django.template import RequestContext
 from django.utils import six
+from django.db import transaction
+from tastypie import http
+
 from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
 
 import simplejson as json
+import uuid
+import h5py
+import os
 
 RESOURCES = dict(METADATA_RESOURCES.items() + EPHYS_RESOURCES.items())
+RESOURCE_SCHEMAS = dict(
+    (name, resource.build_schema()) for name, resource in RESOURCES.items()
+)
 
 
 def list_view(request, resource_type):
@@ -87,3 +97,103 @@ def detail_view(request, resource_type, id):
     }
     return render_to_response('detail_view.html', content,
                               context_instance=RequestContext(request))
+
+
+@transaction.atomic
+def in_bulk(request):
+    """
+    Parses an uploaded HDF5 'Delta' file with new/changed objects tree and
+     creates/updates the database using appropriate API Resources.
+
+    :param request:
+    :return:
+    """
+    def get_fk_field_names(model_name):
+        schema = RESOURCE_SCHEMAS[model_name]
+        fields = schema['fields']
+
+        fk = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
+        return [k for k, v in fields.items() if fk(v)]
+
+    if not (request.method == 'POST' and len(request.FILES) > 0):
+        return HttpResponseBadRequest("Supporting only POST multipart/form-data"
+                                      " requests with files")
+
+    if not 'raw_file' in request.FILES:
+        return HttpResponseBadRequest("The name of the field should be "
+                                      "'raw_file'")
+
+    path = request.FILES['raw_file'].temporary_file_path
+    if not h5py.is_hdf5(path):
+        return HttpResponseBadRequest("Uploaded file is not an HDF5 file")
+
+    f = h5py.File(request.FILES['raw_file'].temporary_file_path, 'r')
+
+    incoming_locations = f.keys()
+    todo = []  # array of ids to process as an ordered sequence
+    ids_map = {}  # map of the temporary IDs to the new IDs of created objects
+
+    # this loop sorts object tree as "breadth-first" sequence based on their
+    # parent <- children relations
+    while incoming_locations:
+        location = incoming_locations[0]
+        json_obj = json.loads(f[location]['json'].value)
+
+        model_name = location.split('-')[4]  # FIXME make more robust
+        fk_names = get_fk_field_names(model_name)
+
+        match = lambda x: len([k for k in incoming_locations if k.split('-')[5] == x]) > 0
+        parents = [v for k, v in json_obj.items() if k in fk_names and match(v)]
+
+        if len(parents) == 0:
+            todo.append(location)
+            incoming_locations.remove(location)
+
+    while todo:
+        location = todo[0]
+        group = f[location]
+        json_obj = json.loads(group['json'].value)
+
+        _, _, _, _, model_name, obj_id, _ = location.split('-')  # FIXME robust?
+        fk_names = get_fk_field_names(model_name)
+
+        # update parent IDs to the IDs of created objects
+        to_update = [k for k in json_obj.keys() if k in fk_names]
+        for name in to_update:
+            if json_obj[name].startswith('TEMP'):
+                json_obj[name] = ids_map[json_obj[name]]
+
+        res = RESOURCES[model_name]
+        if obj_id.startswith('TEMP'):  # create new object
+            bundle = res.build_bundle(request=request, data=json_obj)
+            res_bundle = res.obj_create(bundle)
+
+            ids_map[obj_id] = res_bundle.obj.local_id
+
+        else:  # update object
+            request_bundle = res.build_bundle(request=request)
+            obj = res.obj_get(request_bundle, pk=obj_id)
+
+            bundle = res.build_bundle(obj=obj, data=json_obj, request=request)
+            res_bundle = res.obj_update(bundle)
+
+        # update data fields. no need to check permissions as they must be
+        # already validated with the object update
+        data_fields = [k for k in group.keys() if not k == 'json']
+        for name in data_fields:
+
+            # dump array to disk
+            filename = uuid.uuid1().hex + ".h5"
+            path = os.path.join("/tmp", filename)  # FIXME get proper temppath
+
+            with h5py.File(path) as temp_f:
+                temp_f.create_dataset(name=obj_id, data=group[name].value)
+
+            setattr(res_bundle.obj, name, open(path))
+
+        if len(data_fields) > 0:
+            res_bundle.obj.save()
+
+        todo.remove(location)
+
+    return http.HttpAccepted("Delta loaded successfully")
