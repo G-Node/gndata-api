@@ -108,8 +108,10 @@ def in_bulk(request):
     Parses an uploaded HDF5 'Delta' file with new/changed objects tree and
      creates/updates the database using appropriate API Resources.
 
-    :param request:
-    :return:
+     Tests for this function are available only at the client side.
+
+    :param request:     multipart/form-data request with 'raw_file' delta file
+                        that contains objects to be saved
     """
     def get_fk_field_names(model_name):
         schema = RESOURCE_SCHEMAS[model_name]
