@@ -1,4 +1,6 @@
 from django.core.files import File
+from django.core.files.uploadhandler import MemoryFileUploadHandler
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render_to_response
 from django.http import HttpResponseBadRequest
 from django.template import RequestContext
@@ -99,6 +101,7 @@ def detail_view(request, resource_type, id):
                               context_instance=RequestContext(request))
 
 
+@csrf_exempt
 @transaction.atomic
 def in_bulk(request):
     """
@@ -115,19 +118,34 @@ def in_bulk(request):
         fk = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
         return [k for k, v in fields.items() if fk(v)]
 
+    def get_m2m_field_names(model_name):
+        schema = RESOURCE_SCHEMAS[model_name]
+        fields = schema['fields']
+
+        to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
+        return [k for k, v in fields.items() if to_many(v)]
+
+    # always save file to disk by removing MemoryFileUploadHandler
+    for handler in request.upload_handlers:
+        if isinstance(handler, MemoryFileUploadHandler):
+            request.upload_handlers.remove(handler)
+
     if not (request.method == 'POST' and len(request.FILES) > 0):
-        return HttpResponseBadRequest("Supporting only POST multipart/form-data"
+        return http.HttpBadRequest("Supporting only POST multipart/form-data"
                                       " requests with files")
 
     if not 'raw_file' in request.FILES:
-        return HttpResponseBadRequest("The name of the field should be "
+        return http.HttpBadRequest("The name of the field should be "
                                       "'raw_file'")
 
-    path = request.FILES['raw_file'].temporary_file_path
-    if not h5py.is_hdf5(path):
-        return HttpResponseBadRequest("Uploaded file is not an HDF5 file")
+    if not request.user.is_authenticated():
+        return http.HttpUnauthorized("Must authorize before uploading")
 
-    f = h5py.File(request.FILES['raw_file'].temporary_file_path, 'r')
+    path = request.FILES['raw_file'].temporary_file_path()
+    try:
+        f = h5py.File(path, 'r')
+    except IOError:
+        return HttpResponseBadRequest("Uploaded file is not an HDF5 file")
 
     incoming_locations = f.keys()
     todo = []  # array of ids to process as an ordered sequence
@@ -141,14 +159,21 @@ def in_bulk(request):
 
         model_name = location.split('-')[4]  # FIXME make more robust
         fk_names = get_fk_field_names(model_name)
+        m2m_names = get_m2m_field_names(model_name)
+
+        parents = [v for k, v in json_obj.items() if k in fk_names]
+        m2ms = [v for k, v in json_obj.items() if k in m2m_names]
+        m2m_flat = [v for m2m in m2ms for v in m2m]
 
         match = lambda x: len([k for k in incoming_locations if k.split('-')[5] == x]) > 0
-        parents = [v for k, v in json_obj.items() if k in fk_names and match(v)]
 
-        if len(parents) == 0:
+        if len([x for x in parents + m2m_flat if match(x)]) == 0:
             todo.append(location)
             incoming_locations.remove(location)
+        else:
+            incoming_locations.append(incoming_locations.pop(0))
 
+    # this loop saves actual objects
     while todo:
         location = todo[0]
         group = f[location]
@@ -156,12 +181,21 @@ def in_bulk(request):
 
         _, _, _, _, model_name, obj_id, _ = location.split('-')  # FIXME robust?
         fk_names = get_fk_field_names(model_name)
+        m2m_names = get_m2m_field_names(model_name)
 
         # update parent IDs to the IDs of created objects
         to_update = [k for k in json_obj.keys() if k in fk_names]
         for name in to_update:
-            if json_obj[name].startswith('TEMP'):
-                json_obj[name] = ids_map[json_obj[name]]
+            value = json_obj[name]
+            if value is not None and value.startswith('TEMP'):
+                json_obj[name] = ids_map[value]
+
+        # update m2m IDs to the IDs of created objects
+        to_update = [k for k in json_obj.keys() if k in m2m_names]
+        for name in to_update:
+            m2m_list = json_obj[name]
+            if m2m_list is not None:
+                json_obj[name] = [ids_map[x] if x.startswith('TEMP') else x for x in m2m_list]
 
         res = RESOURCES[model_name]
         if obj_id.startswith('TEMP'):  # create new object
@@ -189,7 +223,7 @@ def in_bulk(request):
             with h5py.File(path) as temp_f:
                 temp_f.create_dataset(name=obj_id, data=group[name].value)
 
-            setattr(res_bundle.obj, name, open(path))
+            setattr(res_bundle.obj, name, File(open(path)))
 
         if len(data_fields) > 0:
             res_bundle.obj.save()
