@@ -112,6 +112,7 @@ def in_bulk(request):
 
     :param request:     multipart/form-data request with 'raw_file' delta file
                         that contains objects to be saved
+    :return             "top"-object as normal JSON response
     """
     def get_fk_field_names(model_name):
         schema = RESOURCE_SCHEMAS[model_name]
@@ -152,6 +153,7 @@ def in_bulk(request):
     incoming_locations = f.keys()
     todo = []  # array of ids to process as an ordered sequence
     ids_map = {}  # map of the temporary IDs to the new IDs of created objects
+    saved = []  # collector of processed objects
 
     # this loop sorts object tree as "breadth-first" sequence based on their
     # parent <- children relations
@@ -230,6 +232,16 @@ def in_bulk(request):
         if len(data_fields) > 0:
             res_bundle.obj.save()
 
+        saved.append((model_name, res_bundle.obj.local_id))
         todo.remove(location)
 
-    return http.HttpAccepted("Delta loaded successfully")
+    model_name, obj_id = saved[0]  # return top object
+    res = RESOURCES[model_name]
+    bundle = res.build_bundle(request=request)
+    obj = res.obj_get(bundle, pk=obj_id)
+    res_bundle = res.build_bundle(obj=obj, request=request)
+    response = http.HttpAccepted(res.serialize(
+        None, res.full_dehydrate(res_bundle), 'application/json'
+    ))
+
+    return response
