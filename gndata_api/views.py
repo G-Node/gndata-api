@@ -10,6 +10,7 @@ from tastypie import http
 
 from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
 
+import tempfile as tmp
 import simplejson as json
 import uuid
 import h5py
@@ -19,6 +20,27 @@ RESOURCES = dict(METADATA_RESOURCES.items() + EPHYS_RESOURCES.items())
 RESOURCE_SCHEMAS = dict(
     (name, resource.build_schema()) for name, resource in RESOURCES.items()
 )
+
+# helper functions -------------------------------------------------------------
+
+
+def get_fk_field_names(model_name):
+    schema = RESOURCE_SCHEMAS[model_name]
+    fields = schema['fields']
+
+    fk = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
+    return [k for k, v in fields.items() if fk(v)]
+
+
+def get_m2m_field_names(model_name):
+    schema = RESOURCE_SCHEMAS[model_name]
+    fields = schema['fields']
+
+    to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
+    return [k for k, v in fields.items() if to_many(v)]
+
+
+# views ------------------------------------------------------------------------
 
 
 def list_view(request, resource_type):
@@ -76,14 +98,12 @@ def detail_view(request, resource_type, id):
                           if k in normal_names])
 
     # parsing FK fields for rendering
-    to_one = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
-    to_one_names = [k for k, v in fields.items() if to_one(v)]
+    to_one_names = get_fk_field_names(resource_type)
     to_one_fields = dict([(n, getattr(obj, n)) for n in to_one_names
                           if getattr(obj, n) is not None])
 
     # parsing reversed relationships for rendering
-    to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
-    to_many_names = [k for k, v in fields.items() if to_many(v)]
+    to_many_names = get_m2m_field_names(resource_type)
     to_many_fields = {}
     for n in to_many_names:
         qs = get_related_objs(res, n, bundle).all()
@@ -114,20 +134,6 @@ def in_bulk(request):
                         that contains objects to be saved
     :return             "top"-object as normal JSON response
     """
-    def get_fk_field_names(model_name):
-        schema = RESOURCE_SCHEMAS[model_name]
-        fields = schema['fields']
-
-        fk = lambda x: x['type'] == 'related' and x['related_type'] == 'to_one'
-        return [k for k, v in fields.items() if fk(v)]
-
-    def get_m2m_field_names(model_name):
-        schema = RESOURCE_SCHEMAS[model_name]
-        fields = schema['fields']
-
-        to_many = lambda x: x['type'] == 'related' and x['related_type'] == 'to_many'
-        return [k for k, v in fields.items() if to_many(v)]
-
     # always save file to disk by removing MemoryFileUploadHandler
     for handler in request.upload_handlers:
         if isinstance(handler, MemoryFileUploadHandler):
@@ -218,19 +224,22 @@ def in_bulk(request):
         # update data fields. no need to check permissions as they must be
         # already validated with the object update
         data_fields = [k for k in group.keys() if not k == 'json']
+        temp_paths = []  # collector of temp data files
         for name in data_fields:
 
-            # dump array to disk
             filename = uuid.uuid1().hex + ".h5"
-            path = os.path.join("/tmp", filename)  # FIXME get proper temppath
+            path = os.path.join(tmp.gettempdir(), filename)
 
             with h5py.File(path) as temp_f:
                 temp_f.create_dataset(name=obj_id, data=group[name].value)
 
-            setattr(res_bundle.obj, name, File(open(path)))
+            setattr(res_bundle.obj, name, File(open(path), name=filename))
+            temp_paths.append(path)
 
-        if len(data_fields) > 0:
+        if len(data_fields) > 0:  # clean temp files
             res_bundle.obj.save()
+            for path in temp_paths:
+                os.remove(path)
 
         saved.append((model_name, res_bundle.obj.local_id))
         todo.remove(location)
@@ -240,7 +249,7 @@ def in_bulk(request):
     bundle = res.build_bundle(request=request)
     obj = res.obj_get(bundle, pk=obj_id)
     res_bundle = res.build_bundle(obj=obj, request=request)
-    response = http.HttpAccepted(res.serialize(
+    response = http.HttpResponse(res.serialize(
         None, res.full_dehydrate(res_bundle), 'application/json'
     ))
 

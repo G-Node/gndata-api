@@ -8,17 +8,20 @@ from ephys.security import BlockBasedPermissionsMixin
 from ephys.fields import TimeUnitField, SignalUnitField, SamplingUnitField
 from permissions.models import BasePermissionsMixin
 from gndata_api import settings
+from datetime import date
 
 # TODO implement proper slicing
 
-# TODO create data and metadata connection
+# TODO ALL create data and metadata connection
 
 # TODO make nicer upload paths?
 
 
 def make_upload_path(self, filename):
     """ Generates upload path for FileField """
-    return "%s/%s" % (self.owner.username, filename)
+    today = date.today().strftime("%Y/%m/%d")
+    return "%s/%s/%s" % (self.owner.username, today, filename)
+
 
 fs = storage.FileSystemStorage(location=settings.FILE_MEDIA_ROOT)
 
