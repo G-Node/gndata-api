@@ -230,7 +230,7 @@ def in_bulk(request):
             filename = uuid.uuid1().hex + ".h5"
             path = os.path.join(tmp.gettempdir(), filename)
 
-            with h5py.File(path) as temp_f:
+            with h5py.File(path, 'w') as temp_f:
                 temp_f.create_dataset(name=obj_id, data=group[name].value)
 
             setattr(res_bundle.obj, name, File(open(path), name=filename))
