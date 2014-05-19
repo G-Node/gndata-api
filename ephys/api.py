@@ -1,4 +1,5 @@
 from tastypie import fields
+from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from ephys.models import *
 from rest.resource import BaseMeta, BaseGNodeResource, BaseFileResourceMixin
 from permissions.resource import PermissionsResourceMixin
@@ -19,6 +20,12 @@ class BlockResource(BaseGNodeResource, PermissionsResourceMixin):
     class Meta(BaseMeta):
         queryset = Block.objects.all()
         resource_name = Block.__name__.lower()
+        filtering = {
+            'name': ALL,
+            'id': ALL,
+            'date_created': ALL,
+            'owner': ALL_WITH_RELATIONS
+        }
 
 
 class SegmentResource(BaseGNodeResource):

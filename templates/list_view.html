@@ -2,17 +2,52 @@
 
 {% block content %}
 
+    <script type="text/javascript">$(document).ready(function() {
+        $('#search_row').get(0).value =
+                window.location.pathname + window.location.search;
+        if ((window.location.search.length) == 0) {
+            $('#search_row').get(0).value += "?"
+        }
+        $('#search_row').keyup(function(event) {
+            if(event.keyCode == 13){
+                $("#search_button").get(0).click();
+            }
+        });
+        $("#search_button").get(0).onclick = function() {
+            window.location.href = window.location.origin +
+                    $('#search_row').get(0).value;
+        };
+        $('#search_row').focus();
+    });</script>
+
+    <p>Add some filter parameters, separated by <b>&</b> in the input below. Use object attribute names with
+        lookups to filter for certain attribute values, like:</p>
+
+    <p><b>/block/?index=5&description__icontains=electrode</b></p>
+
+    <div class="row">
+        <div class="input-group">
+            <input type="text" class="form-control" id="search_row">
+              <span class="input-group-btn">
+                <button class="btn btn-default" type="button" id="search_button">Go!</button>
+              </span>
+        </div><!-- /input-group -->
+    </div><!-- /.row -->
+
+    <p></p>
+
     {% if obj_list %}
 
-        {% include "list.html" %}
+        {% include "list_widget.html" %}
 
     {% else %}
 
-        <p>You don't have any saved documents yet. Please use one of the
-            Clients (<a href="https://github.com/G-Node/gnode-client-matlab/wiki" target="_blank">Matlab</a>,
-            <a href="http://g-node.github.io/python-gnode-client/" target="_blank">Python</a>)
-            to create metadata Documents or upload
-        datasets.</p>
+        <p>There are no result for this filter or you don't have any saved documents yet.</p>
+        <p>If you just started, use one of the Clients for
+            <a href="https://github.com/G-Node/gnode-client-matlab/wiki" target="_blank">Matlab</a> or
+            <a href="http://g-node.github.io/python-gnode-client/" target="_blank">Python</a>
+            to create metadata documents or upload datasets.
+        </p>
 
     {% endif %}
 
