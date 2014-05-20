@@ -1,7 +1,7 @@
 from tastypie import fields
-from tastypie.constants import ALL, ALL_WITH_RELATIONS
 from ephys.models import *
-from rest.resource import BaseMeta, BaseGNodeResource, BaseFileResourceMixin
+from rest.resource import BaseMeta
+from rest.resource import BaseGNodeResource, BaseFileResourceMixin
 from permissions.resource import PermissionsResourceMixin
 from metadata.api import SectionResource
 
@@ -19,13 +19,6 @@ class BlockResource(BaseGNodeResource, PermissionsResourceMixin):
 
     class Meta(BaseMeta):
         queryset = Block.objects.all()
-        resource_name = Block.__name__.lower()
-        filtering = {
-            'name': ALL,
-            'id': ALL,
-            'date_created': ALL,
-            'owner': ALL_WITH_RELATIONS
-        }
 
 
 class SegmentResource(BaseGNodeResource):
@@ -70,7 +63,6 @@ class SegmentResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Segment.objects.all()
-        resource_name = Segment.__name__.lower()
 
 
 class EventArrayResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -78,7 +70,6 @@ class EventArrayResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = EventArray.objects.all()
-        resource_name = EventArray.__name__.lower()
 
 
 class EventResource(BaseGNodeResource):
@@ -86,7 +77,6 @@ class EventResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Event.objects.all()
-        resource_name = Event.__name__.lower()
 
 
 class EpochArrayResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -94,7 +84,6 @@ class EpochArrayResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = EpochArray.objects.all()
-        resource_name = EpochArray.__name__.lower()
 
 
 class EpochResource(BaseGNodeResource):
@@ -102,7 +91,6 @@ class EpochResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Epoch.objects.all()
-        resource_name = Epoch.__name__.lower()
 
 
 class RCGResource(BaseGNodeResource):
@@ -118,7 +106,6 @@ class RCGResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = RecordingChannelGroup.objects.all()
-        resource_name = RecordingChannelGroup.__name__.lower()
 
 
 class RCResource(BaseGNodeResource):
@@ -140,7 +127,6 @@ class RCResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = RecordingChannel.objects.all()
-        resource_name = RecordingChannel.__name__.lower()
 
     def hydrate_recordingchannelgroup(self, bundle):
         if bundle.obj.block_id is not None:
@@ -171,7 +157,6 @@ class UnitResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Unit.objects.all()
-        resource_name = Unit.__name__.lower()
 
 
 class SpikeTrainResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -180,7 +165,6 @@ class SpikeTrainResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = SpikeTrain.objects.all()
-        resource_name = SpikeTrain.__name__.lower()
 
 
 class ASAResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -189,7 +173,6 @@ class ASAResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = AnalogSignalArray.objects.all()
-        resource_name = AnalogSignalArray.__name__.lower()
 
 
 class AnalogSignalResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -198,7 +181,6 @@ class AnalogSignalResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = AnalogSignal.objects.all()
-        resource_name = AnalogSignal.__name__.lower()
 
 
 class IRSAResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -207,7 +189,6 @@ class IRSAResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = IrregularlySampledSignal.objects.all()
-        resource_name = IrregularlySampledSignal.__name__.lower()
 
 
 class SpikeResource(BaseGNodeResource, BaseFileResourceMixin):
@@ -216,4 +197,3 @@ class SpikeResource(BaseGNodeResource, BaseFileResourceMixin):
 
     class Meta(BaseMeta):
         queryset = Spike.objects.all()
-        resource_name = Spike.__name__.lower()

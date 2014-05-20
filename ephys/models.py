@@ -137,6 +137,8 @@ class EventArray(BlockBasedPermissionsMixin, BaseInfo, DataObject):
     segment = VersionedForeignKey(Segment)
 
     def save(self, *args, **kwargs):
+        import ipdb
+        ipdb.set_trace()
         self.block = self.segment.block
         super(EventArray, self).save(*args, **kwargs)
 

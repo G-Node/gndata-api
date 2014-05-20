@@ -36,7 +36,7 @@ class TestApi(ResourceTestCase):
         self.url_prefix = 'api/v1'
 
     def get_available_objs(self, resource, user):
-        model = resource.Meta.queryset.model
+        model = resource._meta.queryset.model
         if hasattr(model, 'security_filter'):
             return model.security_filter(model.objects.all(), user)
         else:
@@ -100,13 +100,13 @@ class TestApi(ResourceTestCase):
             response = self.client.get(url)
             data = json.loads(response.content)
             self.assertEqual(response.status_code, 200, response.content)
-            self.assertEqual(len(data[resource.Meta.collection_name]), count)
+            self.assertEqual(len(data[resource._meta.collection_name]), count)
 
             self.logout()
 
         for resource in self.resources:
-            name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             url = "/%s/%s/%s/" % (self.url_prefix, api_name, name)
 
             for user in [self.bob, self.ed]:
@@ -116,8 +116,8 @@ class TestApi(ResourceTestCase):
     def test_get(self):
         # TODO also test back in time
         for resource in self.resources:
-            name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
             url = "/%s/%s/%s/%s/" % (
                 self.url_prefix, api_name, name, obj.local_id
@@ -139,8 +139,8 @@ class TestApi(ResourceTestCase):
             if not isinstance(resource, BaseFileResourceMixin):
                 continue
 
-            res_name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            res_name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
 
             for name, field in resource.file_fields.items():
@@ -167,9 +167,13 @@ class TestApi(ResourceTestCase):
         self.login(self.bob)
 
         for resource in self.resources:
-            name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             url = "/%s/%s/%s/" % (self.url_prefix, api_name, name)
+
+            if name == 'eventarray':
+                import ipdb
+                ipdb.set_trace()
 
             dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
@@ -181,8 +185,8 @@ class TestApi(ResourceTestCase):
 
     def test_update(self):
         for resource in self.resources:
-            name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             obj = self.get_available_objs(resource, self.bob)[0]
             url = "/%s/%s/%s/%s/" % (
                 self.url_prefix, api_name, name, obj.local_id
@@ -209,8 +213,8 @@ class TestApi(ResourceTestCase):
     def test_delete(self):
         for resource in self.resources:
             obj = self.get_available_objs(resource, self.bob)[0]
-            name = resource.Meta.resource_name
-            api_name = resource.Meta.api_name
+            name = resource._meta.resource_name
+            api_name = resource._meta.api_name
             url = "/%s/%s/%s/%s/" % (
                 self.url_prefix, api_name, name, obj.local_id
             )

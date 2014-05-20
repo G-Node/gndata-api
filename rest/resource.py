@@ -15,7 +15,10 @@ from permissions.authorization import BaseAuthorization
 from permissions.authorization import SessionAuthenticationNoSCRF
 
 
-class BaseMeta:
+class BaseMeta(object):
+    """ An abstract Meta class to set several common attributes to Resource
+    objects """
+
     excludes = ['starts_at', 'ends_at']
     authentication = SessionAuthenticationNoSCRF()
     authorization = BaseAuthorization()
@@ -26,6 +29,24 @@ class BaseMeta:
         'date_created': ALL,
         'owner': ALL_WITH_RELATIONS
     }
+
+    @property
+    def resource_name(self):
+        return self.object_class.__name__.lower()
+
+    @property
+    def filtering(self):
+        local = self.object_class._meta.local_fields
+        fields = [f for f in local if f.name not in ['starts_at', 'ends_at']]
+
+        get_filter = lambda field: ALL_WITH_RELATIONS if \
+            isinstance(field, models.ForeignKey) else ALL
+
+        filters = dict([(field.name, get_filter(field)) for field in fields])
+        if 'local_id' in filters.keys():
+            filters['id'] = filters.pop('local_id')
+
+        return filters
 
 
 class BaseGNodeResource(ModelResource):
@@ -76,7 +97,7 @@ class BaseGNodeResource(ModelResource):
             elif not value.lower().startswith("/api/"):
                 to = field.to_class
                 return "/api/v1/%s/%s/%s/" % (  # FIXME generalize URL prefix
-                    to.Meta.api_name, to.Meta.resource_name, value
+                    to._meta.api_name, to._meta.resource_name, value
                 )
             return value
 
@@ -195,7 +216,7 @@ class BaseFileResourceMixin(ModelResource):
             return http.HttpMultipleChoices("More than one object found "
                                             "at this URL.")
         try:
-            field = self.Meta.object_class._meta.get_field_by_name(attr_name)[0]
+            field = self._meta.object_class._meta.get_field_by_name(attr_name)[0]
 
         except FieldDoesNotExist:
             return http.HttpBadRequest("Attribute %s does not exist" %

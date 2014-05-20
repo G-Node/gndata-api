@@ -16,16 +16,6 @@ class DocumentResource(BaseGNodeResource, PermissionsResourceMixin):
 
     class Meta(BaseMeta):
         queryset = Document.objects.all()
-        resource_name = 'document'
-        filtering = {
-            'author': ALL,
-            'date': ALL,
-            'version': ALL,
-            'repository': ALL,
-            'owner': ALL_WITH_RELATIONS,
-            'id': ALL,
-            'date_created': ALL
-        }
 
 
 class SectionResource(BaseGNodeResource):
@@ -50,21 +40,6 @@ class SectionResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Section.objects.all()
-        resource_name = 'section'
-        filtering = {
-            'id': ALL,
-            'name': ALL,
-            'type': ALL,
-            'reference': ALL,
-            'definition': ALL,
-            'link': ALL,
-            'include': ALL,
-            'repository': ALL,
-            'mapping': ALL,
-            'section': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS,
-            'date_created': ALL
-        }
 
 
 class PropertyResource(BaseGNodeResource):
@@ -76,19 +51,7 @@ class PropertyResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Property.objects.all()
-        resource_name = 'property'
         excludes = ['starts_at', 'ends_at', 'document']
-        filtering = {
-            'name': ALL,
-            'definition': ALL,
-            'mapping': ALL,
-            'dependency': ALL,
-            'dependencyvalue': ALL,
-            'section': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS,
-            'id': ALL,
-            'date_created': ALL
-        }
 
 
 class ValueResource(BaseGNodeResource):
@@ -96,18 +59,4 @@ class ValueResource(BaseGNodeResource):
 
     class Meta(BaseMeta):
         queryset = Value.objects.all()
-        resource_name = 'value'
         excludes = ['starts_at', 'ends_at', 'document']
-        filtering = {
-            'type': ALL,
-            'uncertainty': ALL,
-            'unit': ALL,
-            'definition': ALL,
-            'filename': ALL,
-            'encoder': ALL,
-            'checksum': ALL,
-            'property': ALL_WITH_RELATIONS,
-            'owner': ALL_WITH_RELATIONS,
-            'id': ALL,
-            'date_created': ALL
-        }
