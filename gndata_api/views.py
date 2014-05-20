@@ -52,13 +52,17 @@ def list_view(request, resource_type):
     request_bundle = res.build_bundle(request=request)
     queryset = res.obj_get_list(request_bundle)
 
-    schema = res.build_schema()
+    sorted_objects = res.apply_sorting(queryset, options=request.GET)
 
-    content = {
-        'obj_list': queryset,
-        'resource_type': resource_type,
-        'schema': schema
-    }
+    paginator = res._meta.paginator_class(
+        request.GET, sorted_objects, resource_uri=res.get_resource_uri(),
+        limit=res._meta.limit, max_limit=res._meta.max_limit,
+        collection_name=res._meta.collection_name)
+    content = paginator.page()
+
+    content['resource_type'] = resource_type
+    content['schema'] = res.build_schema()
+
     return render_to_response('list_view.html', content,
                               context_instance=RequestContext(request))
 
