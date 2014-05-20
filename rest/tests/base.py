@@ -50,7 +50,8 @@ class TestApi(ResourceTestCase):
         for name, meta in [(k, v) for k, v in fields.items() if not v['readonly']]:
 
             if name in file_fields.keys() or name == 'safety_level' or \
-                    name.endswith('__unit') or name == 'document':
+                    name.endswith('__unit') or name == 'document' or \
+                    name == 'local_id':
                 continue  # these fields have good default values
 
             if meta['type'] == 'related':
@@ -170,10 +171,6 @@ class TestApi(ResourceTestCase):
             name = resource._meta.resource_name
             api_name = resource._meta.api_name
             url = "/%s/%s/%s/" % (self.url_prefix, api_name, name)
-
-            if name == 'eventarray':
-                import ipdb
-                ipdb.set_trace()
 
             dummy = self.build_dummy_json(resource, self.bob)
             kwargs = {'content_type': "application/json"}
