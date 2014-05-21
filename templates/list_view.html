@@ -38,7 +38,46 @@
 
     {% if selected %}
 
+        <!-- list with objects -->
+
         {% include "list_widget.html" %}
+
+        <!-- paginator for list -->
+
+        {% if previous or next %}
+        <ul class="pagination">
+
+            {% if previous %}
+                <li><a href="{{ previous }}">&laquo;</a></li>
+            {% else %}
+                <li class="disabled"><a href="#">&laquo;</a></li>
+            {% endif %}
+
+            {% if pre_previous %}
+                <li><a href="{{ pre_previous }}">{{ current_page_num|add:-2 }}</a></li>
+            {% endif %}
+
+            {% if previous %}
+                <li><a href="{{ previous }}">{{ current_page_num|add:-1 }}</a></li>
+            {% endif %}
+
+            <li class="active"><a href="#">{{ current_page_num }} <span class="sr-only">(current)</span></a></li>
+
+            {% if next %}
+                <li><a href="{{ next }}">{{ current_page_num|add:1 }}</a></li>
+            {% endif %}
+
+            {% if post_next %}
+                <li><a href="{{ post_next }}">{{ current_page_num|add:2 }}</a></li>
+            {% endif %}
+
+            {% if next %}
+                <li><a href="{{ next }}">&raquo;</a></li>
+            {% else %}
+                <li class="disabled"><a href="#">&raquo;</a></li>
+            {% endif %}
+        </ul>
+        {% endif %}
 
     {% else %}
 

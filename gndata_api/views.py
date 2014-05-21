@@ -9,6 +9,7 @@ from django.db import transaction
 from tastypie import http
 
 from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
+from gndata_api.paginator import ListPaginator
 
 import tempfile as tmp
 import simplejson as json
@@ -54,14 +55,21 @@ def list_view(request, resource_type):
 
     sorted_objects = res.apply_sorting(queryset, options=request.GET)
 
-    paginator = res._meta.paginator_class(
-        request.GET, sorted_objects, resource_uri=res.get_resource_uri(),
-        limit=res._meta.limit, max_limit=res._meta.max_limit,
-        collection_name=res._meta.collection_name)
-    content = paginator.page()
+    offset = int(request.GET.get('offset', 0))
+    limit = int(request.GET.get('limit', res._meta.limit))
 
-    content['resource_type'] = resource_type
-    content['schema'] = res.build_schema()
+    lp = ListPaginator(sorted_objects, request.get_full_path(), offset, limit)
+
+    content = {
+        'resource_type': resource_type,
+        'selected': lp.page().object_list,
+        'previous': lp.previous,
+        'pre_previous': lp.pre_previous,
+        'next': lp.next,
+        'post_next': lp.post_next,
+        'num_pages': lp.num_pages,
+        'current_page_num': lp.current_page_num,
+    }
 
     return render_to_response('list_view.html', content,
                               context_instance=RequestContext(request))
