@@ -13,7 +13,9 @@ class ListPaginator(object):
     def _generate_url(self, offset, limit):
         scheme, loc, path, query, frag = urlparse.urlsplit(self._original_url)
 
-        query_dict = dict([x.split('=') for x in query.split('&')])
+        query_dict = {}
+        if len(query) > 0:
+            query_dict = dict([x.split('=') for x in query.split('&')])
 
         query_dict['offset'] = str(offset)
         query_dict['limit'] = str(limit)
