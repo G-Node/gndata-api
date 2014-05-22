@@ -18,10 +18,21 @@ class BaseGnodeObject(BaseVersionedObject):
         test = lambda x: not x.name in no_render and not isinstance(x, models.ForeignKey)
         allowed = [f.name for f in self._meta.local_fields if test(f)]
 
+        # do not show fields with None values
         is_valid = lambda x: x[1] is not None
         attrs = filter(is_valid, [(name, getattr(self, name)) for name in allowed])
 
-        return ", ".join(["%s: %s" % (k, str(v)) for k, v in dict(attrs).items()])
+        # convert datetime to string
+        attrs = [(k, v.strftime("%y-%m-%d")) if hasattr(v, 'strftime') else (k, v) for k, v in attrs]
+
+        # show name field first, if exists
+        try:
+            name_index = [k for k, v in attrs].index('name')
+            attrs.insert(0, attrs.pop(name_index))
+        except ValueError:
+            pass  # name attribute does not exist
+
+        return ", ".join(["%s: %s" % (k, str(v)) for k, v in attrs])
 
     def is_accessible(self, user):
         """ by default object is accessible for it's owner """
