@@ -19,9 +19,9 @@ class Document(BasePermissionsMixin, BaseGnodeObject):
     version = models.CharField(max_length=100, blank=True, null=True)
     repository = models.CharField(max_length=100, blank=True, null=True)
 
-    def __unicode__(self):
-        return "Document (by %s, %s, ver. %s)" % \
-            (self.author, str(self.date or "(date not set)"), self.version)
+    #def __unicode__(self):
+    #    return "Document (by %s, %s, ver. %s)" % \
+    #        (self.author, str(self.date or "(date not set)"), self.version)
 
 
 class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
@@ -63,11 +63,11 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
     # manager that proxies correct QuerySet
     objects = SectionManager()
 
-    def __unicode__(self):
-        if self.name:
-            return "%s (%s)" % (self.name, self.type)
-        else:
-            return self.type
+    #def __unicode__(self):
+    #    if self.name:
+    #        return "%s (%s)" % (self.name, self.type)
+    #    else:
+    #        return self.type
 
     @property
     def sections(self):
@@ -152,9 +152,6 @@ class Property(DocumentBasedPermissionsMixin, BaseGnodeObject):
     section = VersionedForeignKey(Section, on_delete=models.CASCADE)
     document = VersionedForeignKey(Document)
 
-    def __unicode__(self):
-        return self.name
-
     def save(self, *args, **kwargs):
         self.document = self.section.document
         super(Property, self).save(*args, **kwargs)
@@ -174,9 +171,6 @@ class Value(DocumentBasedPermissionsMixin, BaseGnodeObject):
     checksum = models.CharField(max_length=100, blank=True, null=True)
     property = VersionedForeignKey(Property, on_delete=models.CASCADE)
     document = VersionedForeignKey(Document)
-
-    def __unicode__(self):
-        return self.data
 
     def save(self, *args, **kwargs):
         self.document = self.property.document

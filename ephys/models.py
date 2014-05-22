@@ -52,9 +52,6 @@ class Block(BasePermissionsMixin, BaseGnodeObject):
     def size(self):
         return sum([s.size for s in self.segment_set.all()])
 
-    def __unicode__(self):
-        return self.name
-
 
 class BaseInfo(BaseGnodeObject):
     """ Base abstract class for any NEO object (except Block) """
@@ -66,9 +63,6 @@ class BaseInfo(BaseGnodeObject):
 
     class Meta:
         abstract = True
-
-    def __unicode__(self):
-        return self.name
 
     @property
     def has_data(self):
