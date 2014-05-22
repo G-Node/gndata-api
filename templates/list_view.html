@@ -20,10 +20,9 @@
         $('#search_row').focus();
     });</script>
 
-    <p>Add some filter parameters, separated by <b>&</b> in the input below. Use object attribute names with
-        lookups to filter for certain attribute values, like:</p>
-
-    <p><b>/block/?index=5&description__icontains=electrode</b></p>
+    <p><b>example:</b> /block/?index=5&description__icontains=electrode&id__in=3PFC5HUJ80,DTUTPDOVR2</p>
+    <p><b>fields:</b> {{ simple_field_names|join:", " }}</p>
+    <p><b>field lookups:</b> {{ lookups|join:", " }}</p>
 
     <div class="row">
         <div class="input-group">

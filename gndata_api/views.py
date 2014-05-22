@@ -25,6 +25,14 @@ RESOURCE_SCHEMAS = dict(
 # helper functions -------------------------------------------------------------
 
 
+def get_simple_field_names(model_name):
+    schema = RESOURCE_SCHEMAS[model_name]
+    fields = schema['fields']
+
+    normal = lambda x: x['type'] != 'related'
+    return [k for k, v in fields.items() if normal(v)]
+
+
 def get_fk_field_names(model_name):
     schema = RESOURCE_SCHEMAS[model_name]
     fields = schema['fields']
@@ -60,6 +68,9 @@ def list_view(request, resource_type):
 
     lp = ListPaginator(sorted_objects, request.get_full_path(), offset, limit)
 
+    can_be_rendered = lambda x: x not in ['local_id', 'guid', 'resource_uri']
+    fields = filter(can_be_rendered, get_simple_field_names(resource_type))
+
     content = {
         'resource_type': resource_type,
         'selected': lp.page().object_list,
@@ -69,6 +80,9 @@ def list_view(request, resource_type):
         'post_next': lp.post_next,
         'num_pages': lp.num_pages,
         'current_page_num': lp.current_page_num,
+        'simple_field_names': fields,
+        'lookups': ['__icontains', '__in', '__gt', '__lt', '__year', '__month',
+                    '__day', '__isnull']
     }
 
     return render_to_response('list_view.html', content,
@@ -100,12 +114,8 @@ def detail_view(request, resource_type, id):
 
     obj_as_json = json.loads(res.serialize(None, bundle, "application/json"))
 
-    schema = res.build_schema()
-    fields = schema['fields']
-
     # parsing standard attributes for rendering
-    normal = lambda x: x['type'] != 'related'
-    normal_names = [k for k, v in fields.items() if normal(v)]
+    normal_names = get_simple_field_names(resource_type)
     normal_fields = dict([(k, v) for k, v in obj_as_json.items()
                           if k in normal_names])
 
