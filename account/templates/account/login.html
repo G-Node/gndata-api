@@ -6,6 +6,10 @@
         <p>Your username and password didn't match. Please try again.</p>
     {% endif %}
 
+    <script type="text/javascript">$(document).ready(function() {
+        $('#id_username').focus();
+    });</script>
+
     <form class="form-horizontal" method="post" action="{% url 'django.contrib.auth.views.login' %}">
         {% csrf_token %}
 
