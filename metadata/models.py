@@ -19,10 +19,6 @@ class Document(BasePermissionsMixin, BaseGnodeObject):
     version = models.CharField(max_length=100, blank=True, null=True)
     repository = models.CharField(max_length=100, blank=True, null=True)
 
-    #def __unicode__(self):
-    #    return "Document (by %s, %s, ver. %s)" % \
-    #        (self.author, str(self.date or "(date not set)"), self.version)
-
 
 class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
     """
@@ -62,12 +58,6 @@ class Section(DocumentBasedPermissionsMixin, BaseGnodeObject):
 
     # manager that proxies correct QuerySet
     objects = SectionManager()
-
-    #def __unicode__(self):
-    #    if self.name:
-    #        return "%s (%s)" % (self.name, self.type)
-    #    else:
-    #        return self.type
 
     @property
     def sections(self):
