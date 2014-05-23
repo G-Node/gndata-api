@@ -134,6 +134,7 @@ def detail_view(request, resource_type, id):
 
     content = {
         'obj': obj,
+        'is_editable': obj.is_editable(request.user),
         'resource_type': resource_type,
         'normal_fields': normal_fields,
         'to_one_fields': to_one_fields,
