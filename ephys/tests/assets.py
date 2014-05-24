@@ -21,21 +21,6 @@ class Assets(BaseAssets):
                        SpikeTrain, AnalogSignalArray, AnalogSignal,
                        IrregularlySampledSignal, Spike]
 
-    def make_dummy_file(self, obj_with_owner):
-        uid = uuid.uuid1().hex
-        filename = uid + '.h5'
-        rel_path = make_upload_path(obj_with_owner, filename)
-        fullpath = os.path.join(FILE_MEDIA_ROOT, rel_path)
-
-        if not os.path.exists(fullpath.replace(filename, '')):
-            os.makedirs(fullpath.replace(filename, ''))
-
-        f = h5py.File(fullpath)
-        f.create_dataset(name=uid, data=[1.48, 2.58, 3.30, 3.88, 4.75])
-        f.close()
-
-        return rel_path
-
     def fill(self):
         # collector for created objects
         assets = {
@@ -114,8 +99,8 @@ class Assets(BaseAssets):
             parent = assets['segment'][0] if i < 2 else assets['segment'][1]
             params = {
                 'name': "Event array %d" % (i + 1),
-                'labels': self.make_dummy_file(parent),
-                'times': self.make_dummy_file(parent),
+                'labels': dump_array_to_file(parent),
+                'times': dump_array_to_file(parent),
                 'times__unit': 'ms',
                 'segment': parent,
                 'owner': bob
@@ -142,10 +127,10 @@ class Assets(BaseAssets):
             parent = assets['segment'][0] if i < 2 else assets['segment'][1]
             params = {
                 'name': "Epoch array %d" % (i + 1),
-                'labels': self.make_dummy_file(parent),
-                'times': self.make_dummy_file(parent),
+                'labels': dump_array_to_file(parent),
+                'times': dump_array_to_file(parent),
                 'times__unit': 'ms',
-                'durations': self.make_dummy_file(parent),
+                'durations': dump_array_to_file(parent),
                 'durations__unit': 'ms',
                 'segment': parent,
                 'owner': bob
@@ -179,7 +164,7 @@ class Assets(BaseAssets):
                 't_start__unit': 'ms',
                 't_stop': 5.23,
                 't_stop__unit': 'ms',
-                'times': self.make_dummy_file(segment),
+                'times': dump_array_to_file(segment),
                 'times__unit': 'ms',
                 'segment': segment,
                 'unit': unit,
@@ -198,7 +183,7 @@ class Assets(BaseAssets):
                 't_start__unit': 'ms',
                 'sampling_rate': 10000.0,
                 'sampling_rate__unit': 'Hz',
-                'signal': self.make_dummy_file(segment),
+                'signal': dump_array_to_file(segment),
                 'signal__unit': 'mV',
                 'segment': segment,
                 'recordingchannelgroup': rcg,
@@ -217,7 +202,7 @@ class Assets(BaseAssets):
                 't_start__unit': 'ms',
                 'sampling_rate': 10000.0,
                 'sampling_rate__unit': 'Hz',
-                'signal': self.make_dummy_file(segment),
+                'signal': dump_array_to_file(segment),
                 'signal__unit': 'mV',
                 'segment': segment,
                 'recordingchannel': rc,
@@ -234,9 +219,9 @@ class Assets(BaseAssets):
                 'name': "Irregular signal %d" % (i + 1),
                 't_start': 1.56,
                 't_start__unit': 'ms',
-                'signal': self.make_dummy_file(segment),
+                'signal': dump_array_to_file(segment),
                 'signal__unit': 'mV',
-                'times': self.make_dummy_file(segment),
+                'times': dump_array_to_file(segment),
                 'times__unit': 'ms',
                 'segment': segment,
                 'recordingchannel': rc,
@@ -257,7 +242,7 @@ class Assets(BaseAssets):
                 'sampling_rate__unit': 'Hz',
                 'left_sweep': 1.56,
                 'left_sweep__unit': 'ms',
-                'waveform': self.make_dummy_file(segment),
+                'waveform': dump_array_to_file(segment),
                 'waveform__unit': 'mV',
                 'segment': segment,
                 'unit': unit,

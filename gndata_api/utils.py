@@ -6,11 +6,35 @@ import string
 import random
 
 from django.core.management.color import no_style
-from django.db import connection
+from django.db import connection, models
 from gndata_api import settings
 
 # this is base32hex alphabet, used to create unique IDs
 alphabet = tuple(list('0123456789' + string.ascii_uppercase)[:32])
+
+
+def get_simple_field_names(model):
+    filt = lambda x: not issubclass(x, models.ForeignKey) and \
+                     not issubclass(x, models.FileField)
+    return [f.name for f in model._meta.local_fields() if filt(f)]
+
+
+def get_fk_field_names(model):
+    filt = lambda x: issubclass(x, models.ForeignKey)
+    return [f.name for f in model._meta.local_fields() if filt(f)]
+
+
+def get_m2m_field_names(model):
+    return [f.name for f in model._meta.local_m2m_fields()]
+
+
+def get_data_field_names(model):
+    filt = lambda x: issubclass(x, models.FileField)
+    return [f for f in model._meta.local_fields() if filt(f)]
+
+
+def get_reverse_models(model):
+    return [f.model for f in model._meta.m1.get_all_related_objects()]
 
 
 # TODO refactor out
