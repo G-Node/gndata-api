@@ -2,7 +2,7 @@ from django.core.files import File
 from django.core.files.uploadhandler import MemoryFileUploadHandler
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render_to_response
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.template import RequestContext
 from django.utils import six
 from django.db import transaction
@@ -10,12 +10,19 @@ from tastypie import http
 
 from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
 from gndata_api.paginator import ListPaginator
+from gndata_api.io import import_neo
 
 import tempfile as tmp
 import simplejson as json
 import uuid
 import h5py
 import os
+
+try:
+    import neo
+except ImportError:
+    neo = None
+
 
 RESOURCES = dict(METADATA_RESOURCES.items() + EPHYS_RESOURCES.items())
 RESOURCE_SCHEMAS = dict(
@@ -142,6 +149,34 @@ def detail_view(request, resource_type, id):
     }
     return render_to_response('detail_view.html', content,
                               context_instance=RequestContext(request))
+
+
+@csrf_exempt
+@transaction.atomic
+def import_file(request):
+
+    # always save file to disk by removing MemoryFileUploadHandler
+    for handler in request.upload_handlers:
+        if isinstance(handler, MemoryFileUploadHandler):
+            request.upload_handlers.remove(handler)
+
+    if not request.user.is_authenticated():
+        return http.HttpUnauthorized("Must authorize before uploading")
+
+    if not (request.method == 'POST' and len(request.FILES) > 0):
+        return http.HttpBadRequest("Supporting only POST multipart/form-data"
+                                   " requests with files")
+
+    path = request.FILES.values()[0].temporary_file_path()
+
+    import ipdb
+    ipdb.set_trace()
+    io = neo.get_io(path)
+
+    imported = import_neo(io.read()[0], request.user)
+    model_name = imported.__class__.__name__.lower()
+
+    return HttpResponseRedirect("/%s/%s/" % (model_name, imported.local_id))
 
 
 @csrf_exempt

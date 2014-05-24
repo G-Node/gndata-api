@@ -68,6 +68,7 @@ urlpatterns = patterns('',
     url(r'^home/$', RedirectView.as_view(url='/document/')),
     url(r'^account/', include('account.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^import/', 'gndata_api.views.import_file', name="import_file"),
 
     # REST API -----------------------------------------------------------------
 
