@@ -14,27 +14,33 @@ alphabet = tuple(list('0123456789' + string.ascii_uppercase)[:32])
 
 
 def get_simple_field_names(model):
-    filt = lambda x: not issubclass(x, models.ForeignKey) and \
-                     not issubclass(x, models.FileField)
-    return [f.name for f in model._meta.local_fields() if filt(f)]
+    filt = lambda x: not isinstance(x, models.ForeignKey) and \
+                     not isinstance(x, models.FileField) and \
+                     not x.name.find('__unit') > 0
+    fields = [f.name for f in model._meta.local_fields if filt(f)]
+
+    unit_filt = lambda x: x.name.find('__unit') > 0 and \
+                          x.name.replace('__unit', '') in fields
+    unit_fields = [f.name for f in model._meta.local_fields if unit_filt(f)]
+    return fields + unit_fields
 
 
 def get_fk_field_names(model):
-    filt = lambda x: issubclass(x, models.ForeignKey)
-    return [f.name for f in model._meta.local_fields() if filt(f)]
+    filt = lambda x: isinstance(x, models.ForeignKey)
+    return [f.name for f in model._meta.local_fields if filt(f)]
 
 
 def get_m2m_field_names(model):
-    return [f.name for f in model._meta.local_m2m_fields()]
+    return [f.name for f in model._meta.local_many_to_many]
 
 
 def get_data_field_names(model):
-    filt = lambda x: issubclass(x, models.FileField)
-    return [f for f in model._meta.local_fields() if filt(f)]
+    filt = lambda x: isinstance(x, models.FileField)
+    return [f.name for f in model._meta.local_fields if filt(f)]
 
 
 def get_reverse_models(model):
-    return [f.model for f in model._meta.m1.get_all_related_objects()]
+    return [f.model for f in model._meta.get_all_related_objects()]
 
 
 # TODO refactor out

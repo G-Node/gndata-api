@@ -167,14 +167,19 @@ def import_file(request):
         return http.HttpBadRequest("Supporting only POST multipart/form-data"
                                    " requests with files")
 
-    path = request.FILES.values()[0].temporary_file_path()
+    uploaded_file = request.FILES.values()[0]
 
-    import ipdb
-    ipdb.set_trace()
-    io = neo.get_io(path)
+    tmp_path = uploaded_file.temporary_file_path()
+    tmp_base, tmp_ext = os.path.splitext(tmp_path)
+    new_path = tmp_base + os.path.splitext(uploaded_file.name)[1]
 
+    os.rename(tmp_path, new_path)
+
+    io = neo.get_io(new_path)
     imported = import_neo(io.read()[0], request.user)
     model_name = imported.__class__.__name__.lower()
+
+    os.rename(new_path, tmp_path)
 
     return HttpResponseRedirect("/%s/%s/" % (model_name, imported.local_id))
 
