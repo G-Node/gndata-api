@@ -161,7 +161,7 @@ class UnitResource(BaseGNodeResource):
 
 class SpikeTrainResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
-    unit = fields.ToOneField(UnitResource, 'unit')
+    unit = fields.ToOneField(UnitResource, 'unit', blank=True, null=True)
 
     class Meta(BaseMeta):
         queryset = SpikeTrain.objects.all()
@@ -169,7 +169,7 @@ class SpikeTrainResource(BaseGNodeResource, BaseFileResourceMixin):
 
 class ASAResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
-    recordingchannelgroup = fields.ToOneField(RCGResource, 'recordingchannelgroup')
+    recordingchannelgroup = fields.ToOneField(RCGResource, 'recordingchannelgroup', blank=True, null=True)
 
     class Meta(BaseMeta):
         queryset = AnalogSignalArray.objects.all()
@@ -177,7 +177,7 @@ class ASAResource(BaseGNodeResource, BaseFileResourceMixin):
 
 class AnalogSignalResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
-    recordingchannel = fields.ToOneField(RCResource, 'recordingchannel')
+    recordingchannel = fields.ToOneField(RCResource, 'recordingchannel', blank=True, null=True)
 
     class Meta(BaseMeta):
         queryset = AnalogSignal.objects.all()
@@ -185,7 +185,7 @@ class AnalogSignalResource(BaseGNodeResource, BaseFileResourceMixin):
 
 class IRSAResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
-    recordingchannel = fields.ToOneField(RCResource, 'recordingchannel')
+    recordingchannel = fields.ToOneField(RCResource, 'recordingchannel', blank=True, null=True)
 
     class Meta(BaseMeta):
         queryset = IrregularlySampledSignal.objects.all()
@@ -193,7 +193,7 @@ class IRSAResource(BaseGNodeResource, BaseFileResourceMixin):
 
 class SpikeResource(BaseGNodeResource, BaseFileResourceMixin):
     segment = fields.ToOneField(SegmentResource, 'segment')
-    unit = fields.ToOneField(UnitResource, 'unit')
+    unit = fields.ToOneField(UnitResource, 'unit', blank=True, null=True)
 
     class Meta(BaseMeta):
         queryset = Spike.objects.all()
