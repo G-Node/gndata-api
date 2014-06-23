@@ -254,7 +254,9 @@ def in_bulk(request):
             path = os.path.join(tmp.gettempdir(), filename)
 
             with h5py.File(path, 'w') as temp_f:
-                temp_f.create_dataset(name=obj_id, data=group[name].value)
+                temp_f.create_dataset(
+                    name=res_bundle.obj.local_id, data=group[name].value
+                )
 
             setattr(res_bundle.obj, name, File(open(path), name=filename))
             temp_paths.append(path)
