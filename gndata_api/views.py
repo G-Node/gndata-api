@@ -177,7 +177,7 @@ def in_bulk(request):
     try:
         f = h5py.File(path, 'r')
     except IOError:
-        return HttpResponseBadRequest("Uploaded file is not an HDF5 file")
+        return http.HttpBadRequest("Uploaded file is not an HDF5 file")
 
     incoming_locations = f.keys()
     todo = []  # array of ids to process as an ordered sequence
