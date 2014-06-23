@@ -1,3 +1,7 @@
+import uuid
+import os
+import h5py
+
 from django.db import models
 from django.core.files import storage
 from state_machine.models import BaseGnodeObject
@@ -21,6 +25,22 @@ def make_upload_path(self, filename):
     """ Generates upload path for FileField """
     today = date.today().strftime("%Y/%m/%d")
     return "%s/%s/%s" % (self.owner.username, today, filename)
+
+
+def dump_array_to_file(obj_with_owner, data=(1.48, 2.58, 3.88, 4.75)):
+    uid = uuid.uuid1().hex
+    filename = uid + '.h5'
+    rel_path = make_upload_path(obj_with_owner, filename)
+    fullpath = os.path.join(settings.FILE_MEDIA_ROOT, rel_path)
+
+    if not os.path.exists(fullpath.replace(filename, '')):
+        os.makedirs(fullpath.replace(filename, ''))
+
+    f = h5py.File(fullpath)
+    f.create_dataset(name=uid, data=data)
+    f.close()
+
+    return rel_path
 
 
 fs = storage.FileSystemStorage(location=settings.FILE_MEDIA_ROOT)
