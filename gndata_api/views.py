@@ -11,6 +11,7 @@ from tastypie import http
 from gndata_api.urls import METADATA_RESOURCES, EPHYS_RESOURCES
 from gndata_api.paginator import ListPaginator
 
+import gndata_api.settings as settings
 import tempfile as tmp
 import simplejson as json
 import uuid
@@ -64,7 +65,8 @@ def list_view(request, resource_type):
     sorted_objects = res.apply_sorting(queryset, options=request.GET)
 
     offset = int(request.GET.get('offset', 0))
-    limit = int(request.GET.get('limit', res._meta.limit))
+    limit = int(request.GET.get('limit', settings.BROWSER_LIMIT_PER_PAGE))
+    # access API limit with res._meta.limit
 
     lp = ListPaginator(sorted_objects, request.get_full_path(), offset, limit)
 

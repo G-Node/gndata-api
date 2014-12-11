@@ -1,6 +1,6 @@
 from gndata_api import settings
 
-max_results = settings.REST_CONFIG['max_results']
+max_results = settings.API_LIMIT_PER_PAGE
 
 
 class BaseService(object):

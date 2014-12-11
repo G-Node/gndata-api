@@ -43,9 +43,8 @@ TEMPLATE_DIRS = (
     os.path.join(BASE_DIR, 'templates'),
 )
 
-REST_CONFIG = {
-    'max_results': 100
-}
+API_LIMIT_PER_PAGE = 500
+BROWSER_LIMIT_PER_PAGE = 20
 
 TASTYPIE_FULL_DEBUG = True
 
