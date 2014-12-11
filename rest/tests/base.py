@@ -195,7 +195,7 @@ class TestApi(ResourceTestCase):
             self.login(self.bob)
 
             response = self.client.put(url, json.dumps(dummy), **kwargs)
-            self.assertEqual(response.status_code, 200, response.content)
+            self.assertTrue(response.status_code in [200, 202], response.content)
             json_obj = resource._meta.serializer.deserialize(
                 response.content, format=response['Content-Type']
             )
