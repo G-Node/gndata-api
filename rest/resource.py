@@ -234,7 +234,7 @@ class BaseFileResourceMixin(ModelResource):
                 return http.HttpNoContent()
 
             with open(filepath, 'r') as f:
-                response = HttpResponse(f.read(), mimetype='application/x-hdf')
+                response = HttpResponse(f.read(), content_type='application/x-hdf')
                 response['Content-Disposition'] = "attachment; filename=%s" % \
                                                   os.path.basename(filepath)
                 response['Content-Length'] = os.path.getsize(f.name)
